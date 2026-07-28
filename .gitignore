@@ -1,0 +1,12 @@
+*.zip
+store-assets/*.png
+store-assets/*.jpg
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+
+# Skill content is regenerable from skills-lock.json — don't vendor it in-repo
+.claude/skills/
+.agents/skills/
+.claude/settings.local.json
