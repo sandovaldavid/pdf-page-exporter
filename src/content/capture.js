@@ -89,8 +89,9 @@
     return new Promise((resolve) => {
       const start = Date.now();
       const tick = () => {
-        if (predicate() || Date.now() - start > timeoutMs) {
-          resolve();
+        const result = predicate();
+        if (result || Date.now() - start > timeoutMs) {
+          resolve(result);
           return;
         }
         setTimeout(tick, pollMs);
@@ -133,6 +134,7 @@
       const expectedPageCount = initial.expectedPageCount;
       const capturedElements = [];
       let stepsWithoutProgress = 0;
+      let consecutiveEmptySteps = 0;
 
       const captureNewlyRenderedPages = () => {
         const { pageElements } = detector.detectPages();
@@ -159,7 +161,13 @@
           const step = scrollContainer.clientHeight * SCROLL_STEP_RATIO;
           scrollContainer.scrollTop = Math.min(before + step, scrollContainer.scrollHeight);
 
-          await waitFor(captureNewlyRenderedPages, RENDER_WAIT_TIMEOUT_MS, RENDER_POLL_INTERVAL_MS);
+          // After one empty step, back off to a short timeout: if nothing
+          // rendered within a full wait, further waits at this scroll
+          // position essentially never help and would otherwise burn a
+          // full RENDER_WAIT_TIMEOUT_MS on every remaining step.
+          const timeout = consecutiveEmptySteps > 0 ? 300 : RENDER_WAIT_TIMEOUT_MS;
+          const capturedSomething = await waitFor(captureNewlyRenderedPages, timeout, RENDER_POLL_INTERVAL_MS);
+          consecutiveEmptySteps = capturedSomething ? 0 : consecutiveEmptySteps + 1;
 
           overlay.update(capturedElements.length, expectedPageCount);
           reportProgress(capturedElements.length, expectedPageCount);
