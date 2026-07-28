@@ -10,15 +10,21 @@
 
 ## Cómo completarla
 
+No fue posible automatizar esta verificación: el MCP de chrome-devtools no
+pudo conectarse a una sesión real de Chrome con Google autenticado (el
+toggle de "Remote debugging" de `chrome://inspect` no expone el endpoint
+clásico `--remote-debugging-port` que la herramienta necesita, y lanzar una
+instancia nueva no sirve porque no tendría tu sesión de Google). Es un paso
+manual:
+
 1. Abrir un PDF propio en el visor de Drive (`drive.google.com/file/d/…/view`).
-2. Con el MCP de chrome-devtools (`evaluate_script` sobre la pestaña), volcar:
-   - `document.querySelectorAll('img[src^="blob:"]').length` y sus `naturalWidth/naturalHeight`
-   - `document.querySelectorAll('canvas').length` y sus dimensiones
-   - El ancestro común que sea scrollable (`scrollHeight > clientHeight`)
-   - Si existe algún elemento con texto o `aria-label` tipo "Página X de Y"
-3. Repetir con un documento apaisado y uno de tamaños de página mixtos.
-4. Repetir en la vista embebida (`docs.google.com/viewer?...`) para confirmar si el contenido vive en un iframe.
-5. Actualizar este archivo con los hallazgos reales, con fecha, y ajustar `page-detector.js` si algún supuesto de abajo resulta falso.
+2. Abrir la consola de DevTools (F12 → pestaña Console).
+3. Pegar el contenido completo de `scripts/diagnose-viewer.js` (solo lee el
+   DOM, no escribe nada ni hace peticiones de red) y presionar Enter.
+4. Copiar la salida impresa y guardarla aquí, con fecha.
+5. Repetir con un documento apaisado y uno de tamaños de página mixtos.
+6. Repetir en la vista embebida (`docs.google.com/viewer?...`) para confirmar si el contenido vive en un iframe.
+7. Ajustar `src/content/page-detector.js` si algún supuesto de la tabla de abajo resulta falso (y mantener `scripts/diagnose-viewer.js` en sync, ya que es una copia deliberada de esa misma lógica para poder pegarla suelta en la consola).
 
 ## Estrategia implementada (cascada, de más a menos confiable)
 

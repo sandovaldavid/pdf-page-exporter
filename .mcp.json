@@ -5,8 +5,7 @@
       "command": "npx",
       "args": [
         "chrome-devtools-mcp@latest",
-        "--categoryExtensions",
-        "--autoConnect"
+        "--categoryExtensions"
       ],
       "env": {}
     }
