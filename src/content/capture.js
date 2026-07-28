@@ -27,19 +27,35 @@
   }
 
   function createOverlay() {
+    // Colors/radius mirror src/styles/tokens.css (David Sandoval Identity
+    // System — docs/design-system.md). Font stacks use the same fallback
+    // chains as --ds-font-body/--ds-font-heading, but not the bundled
+    // webfont files themselves: this <style> renders inside the host page
+    // (Drive), and loading a chrome-extension:// font from there would
+    // need a web_accessible_resources entry just for a few seconds of UI.
     const style = document.createElement("style");
     style.textContent = `
-      .dpu-overlay { position: fixed; inset: 0; z-index: 2147483647; background: rgba(32,33,36,.55);
-        display: flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; }
-      .dpu-card { background: #fff; border-radius: 8px; padding: 20px 24px; width: 300px;
-        box-shadow: 0 4px 16px rgba(0,0,0,.3); }
-      .dpu-title { font-size: 14px; font-weight: bold; color: #202124; margin: 0 0 12px; }
-      .dpu-bar-track { background: #e8eaed; border-radius: 4px; height: 8px; overflow: hidden; }
-      .dpu-bar-fill { background: #1a73e8; height: 100%; width: 0%; transition: width .15s ease; }
-      .dpu-status { font-size: 12px; color: #5f6368; margin: 10px 0 14px; }
-      .dpu-cancel { width: 100%; background: #fff; border: 1px solid #dadce0; color: #d93025;
-        padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-      .dpu-cancel:hover { background: #fce8e6; }
+      .dpu-overlay { position: fixed; inset: 0; z-index: 2147483647; background: rgba(2,4,8,.55);
+        display: flex; align-items: center; justify-content: center;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .dpu-card { background: #fff; border-radius: 12px; padding: 20px 24px; width: 300px;
+        box-shadow: 0 4px 16px rgba(2,4,8,.3); border: 1px solid #cbd5e1; }
+      .dpu-title { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-weight: 700; font-size: 14px; color: #0f172a; margin: 0 0 12px; }
+      .dpu-bar-track { background: #e8eef9; border-radius: 999px; height: 8px; overflow: hidden; }
+      .dpu-bar-fill { background: #0a5cd6; height: 100%; width: 0%; transition: width .15s ease; }
+      .dpu-status { font-size: 12px; color: #475569; margin: 10px 0 14px; }
+      .dpu-cancel { width: 100%; background: #fff; border: 1px solid #cbd5e1; color: #ff1744;
+        padding: 8px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+      .dpu-cancel:hover { background: color-mix(in srgb, #ff1744 8%, transparent); }
+      @media (prefers-color-scheme: dark) {
+        .dpu-card { background: #0a0d14; border-color: #1e293b; }
+        .dpu-title { color: #f1f5f9; }
+        .dpu-bar-track { background: #141b29; }
+        .dpu-bar-fill { background: #00b0ff; }
+        .dpu-status { color: #94a3b8; }
+        .dpu-cancel { background: #0a0d14; border-color: #1e293b; }
+      }
     `;
     document.head.appendChild(style);
 
