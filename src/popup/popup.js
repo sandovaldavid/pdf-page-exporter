@@ -27,7 +27,10 @@ function isDriveUrl(url) {
 
 function suggestFilenameFromTitle(title) {
   if (!title) return "";
-  return title.replace(/\s*-\s*Google\s+(Drive|Docs)\s*$/i, "").trim();
+  return title
+    .replace(/\s*-\s*Google\s+(Drive|Docs)\s*$/i, "")
+    .replace(/\.pdf$/i, "")
+    .trim();
 }
 
 async function getActiveTab() {
