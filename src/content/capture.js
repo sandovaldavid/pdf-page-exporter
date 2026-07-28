@@ -6,6 +6,11 @@
   if (window.__dpuStartCapture) return; // already loaded in this frame
 
   const SCROLL_STEP_RATIO = 0.75;
+  // jsPDF's `unit: "px"` multiplies by 96/72 when converting to the PDF's
+  // internal point-based page size (verified empirically: a 600px input
+  // becomes an 800pt MediaBox). Without correcting for that, every page
+  // comes out ~33% larger than a normal 96dpi-screen-based page size.
+  const PDF_UNIT_SCALE = 0.75;
   const RENDER_WAIT_TIMEOUT_MS = 4000;
   const RENDER_POLL_INTERVAL_MS = 100;
   const MAX_SCROLL_STEPS_WITHOUT_PROGRESS = 5;
@@ -205,7 +210,9 @@
         const el = capturedElements[i];
         const { width, height } = naturalSize(el);
         const orientation = width >= height ? "landscape" : "portrait";
-        const format = [width, height];
+        const pdfWidth = width * PDF_UNIT_SCALE;
+        const pdfHeight = height * PDF_UNIT_SCALE;
+        const format = [pdfWidth, pdfHeight];
 
         const pageCanvas = document.createElement("canvas");
         pageCanvas.width = width;
@@ -222,7 +229,7 @@
         } else {
           doc.addPage(format, orientation);
         }
-        doc.addImage(pageCanvas, quality.pdfFormat, 0, 0, width, height, undefined, quality.compression);
+        doc.addImage(pageCanvas, quality.pdfFormat, 0, 0, pdfWidth, pdfHeight, undefined, quality.compression);
 
         pageCanvas.width = 0;
         pageCanvas.height = 0; // release the backing pixel buffer right away
