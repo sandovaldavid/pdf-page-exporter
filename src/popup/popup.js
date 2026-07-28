@@ -67,7 +67,14 @@ function renderResult(state) {
   }
 }
 
-async function applyState(state) {
+async function applyState(state, currentTabId) {
+  // A stored export result belongs to whichever tab ran it. Opening the
+  // popup on a different tab shouldn't show a stale "done"/"error" from an
+  // unrelated document.
+  if (state && state.tabId != null && state.tabId !== currentTabId) {
+    showState("form");
+    return;
+  }
   if (!state || state.status === "idle") {
     showState("form");
     return;
@@ -177,7 +184,7 @@ async function init() {
   els.filenameInput.value = suggestFilenameFromTitle(tab && tab.title);
 
   const { state } = await chrome.runtime.sendMessage({ type: "DPU_GET_STATE" });
-  await applyState(state);
+  await applyState(state, tab.id);
 
   els.exportForm.addEventListener("submit", handleExportSubmit);
 }
