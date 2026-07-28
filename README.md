@@ -65,6 +65,11 @@ src/background/
   service-worker.js         Relay de progreso + estado persistido en storage.session
 src/vendor/
   jspdf.umd.min.js          jsPDF 4.2.1, empaquetado (nunca cargado desde CDN)
+src/styles/
+  tokens.css                Design tokens de la Identity System de David Sandoval (docs/design-system.md)
+assets/fonts/
+  inter-variable-latin.woff2          Fuente variable, empaquetada (nunca cargada desde CDN)
+  jetbrains-mono-variable-latin.woff2 Fuente variable, empaquetada (nunca cargada desde CDN)
 icons/                      icon.svg (fuente) + PNG generados en 16/48/128px
 scripts/
   generate-icons.sh         Rasteriza icons/icon.svg a los tres tamaños (requiere ImageMagick)
@@ -106,7 +111,27 @@ antes de darla por completamente probada:
    virtualización no cambia de patrón a mayor escala.
 4. El caso de iframe genuino (visor incrustado en un origen de terceros).
 
+## Diseño
+
+Los estilos del popup y del overlay de progreso siguen la Identity System
+personal de David Sandoval — ver `docs/design-system.md` para la fuente de
+verdad (colores, tipografía, espaciado). `src/styles/tokens.css` es la
+implementación en CSS; ningún componente debe usar colores hardcodeados
+fuera de ese archivo.
+
+El icono actual es un glifo genérico (documento + flecha de descarga)
+recoloreado al azul de marca (`#0A5CD6`), **no** el isotype/slash oficial de
+la Identity System: ese logo no está embebido en `design-system.md` (solo
+tokens y referencias a nodos de Figma) y recrearlo a mano sin el archivo
+fuente arriesga una versión no aprobada de la marca personal. Para usar el
+isotype real, exporta los assets aprobados desde Figma (`Logo / Favicon`,
+sección 16 del design system) y reemplaza `icons/icon.svg`.
+
 ## Licencia de terceros
 
-`src/vendor/jspdf.umd.min.js` es jsPDF 4.2.1 (MIT), sin modificar. El
-encabezado de licencia original se conserva en el propio archivo.
+- `src/vendor/jspdf.umd.min.js` — jsPDF 4.2.1 (MIT), sin modificar. El
+  encabezado de licencia original se conserva en el propio archivo.
+- `assets/fonts/inter-variable-latin.woff2` — Inter (SIL Open Font
+  License), variable, subset a caracteres latinos.
+- `assets/fonts/jetbrains-mono-variable-latin.woff2` — JetBrains Mono (SIL
+  Open Font License), variable, subset a caracteres latinos.
