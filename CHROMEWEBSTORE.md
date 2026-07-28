@@ -150,7 +150,7 @@ sandovaldavid.eng@gmail.com — ⚠️ confirmar; este correo aparece **pública
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 0.1.0 | 2026-07-27 | Versión inicial: exportación a PDF con recorrido automático, tamaño de página por hoja, nombre de archivo editable, selector de calidad y barra de progreso cancelable. Código implementado y validado sintácticamente; **sin probar aún contra un documento real de Drive** (ver Known Issues). | Draft |
+| 0.1.0 | 2026-07-27 | Versión inicial: exportación a PDF con recorrido automático, tamaño de página por hoja, nombre de archivo editable, selector de calidad y barra de progreso cancelable. Verificada extremo a extremo contra 2 documentos PDF públicos reales; ver Known Issues para lo que falta cubrir antes de publicar. | Draft |
 
 ## Review Notes
 
@@ -163,7 +163,7 @@ Cosas que la revisión puede señalar o que el usuario debe saber:
 3. **Salida ráster.** El PDF contiene imágenes, no texto: no es buscable ni accesible para lectores de pantalla. Está declarado en la descripción para no inducir a error.
 4. **Fidelidad limitada.** La resolución depende del zoom del visor al exportar.
 5. **Librería de terceros empaquetada.** jsPDF 4.2.1 (MIT) viaja minificada dentro del paquete (`src/vendor/jspdf.umd.min.js`), descargada del tarball oficial de npm y verificada contra el `shasum` publicado por el registro antes de incluirla. Nunca se carga en tiempo de ejecución. Minificada, no ofuscada; el encabezado de licencia se conserva.
-6. **Sin verificación en vivo.** La implementación no se ha probado todavía contra el visor real de Google Drive ni en una instancia real de Chrome — el entorno donde se escribió el código no tenía un navegador accesible. La cascada de selectores en `page-detector.js` es una estrategia defensiva razonada, no algo medido. Ver `docs/selectors.md` y la sección "Pruebas" del `README.md`. **No publicar sin completar esta verificación primero.**
+6. **Verificación en vivo parcial.** Probada extremo a extremo con la extensión real instalada contra 2 documentos PDF públicos reales (3 y 12 páginas) en las 2 variantes del visor de Google, incluyendo exportación completa con auto-scroll sobre contenido virtualizado. Ver `docs/selectors.md` para el detalle. Aún sin probar: un documento que exija sesión de Google iniciada, un documento apaisado real, y documentos de 100+ páginas — no publicar sin cubrir al menos el caso de sesión iniciada, ya que es el uso más común.
 
 ### Rejection History
 

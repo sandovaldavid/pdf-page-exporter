@@ -12,10 +12,12 @@ las decisiones técnicas. Ver `CHROMEWEBSTORE.md` para la ficha de la tienda.
 
 ## Estado actual
 
-Implementación inicial (v0.1.0) completa y sin errores de sintaxis, pero
-**sin verificar todavía contra un documento real de Google Drive** ni en un
-navegador Chrome real — ver `docs/selectors.md` y la sección de Pruebas más
-abajo antes de confiar en ella con documentos importantes.
+Implementación v0.1.0 verificada extremo a extremo contra 2 documentos PDF
+reales (3 y 12 páginas) en las 2 variantes del visor de Google
+(`docs.google.com/viewer` y `drive.google.com/file/d/…/view`), con la
+extensión real instalada y un clic real en "Exportar PDF". Ver
+`docs/selectors.md` para el detalle completo y lo que todavía falta probar
+(documento apaisado, documento que exija sesión iniciada, 100+ páginas).
 
 ## Limitaciones conocidas
 
@@ -88,22 +90,21 @@ Empaquetar para distribución/tienda:
 ./scripts/package-extension.sh
 ```
 
-## Pruebas — pendiente
+## Pruebas
 
-La verificación contra el visor real de Google Drive (Fase 0 y Fase 5 del
-`PLAN.md`) no se ha realizado todavía: requiere una sesión de Chrome con un
-documento propio abierto, algo que hay que hacer manualmente. Antes de dar
-por buena esta extensión:
+Ya verificado (ver `docs/selectors.md` para el detalle): detección de
+páginas, orden, contenedor scrollable, auto-scroll con virtualización real,
+y exportación completa contra 2 documentos reales públicos. Lo que falta,
+antes de darla por completamente probada:
 
-1. Carga un PDF propio en `drive.google.com`.
-2. Instala la extensión en modo desarrollador (arriba) y expórtalo.
-3. Compara el PDF resultante con el original (número de páginas, orientación,
-   nitidez).
-4. Repite con un documento largo (100+ páginas), uno apaisado y uno con
-   tamaños de página mixtos.
-5. Anota en `docs/selectors.md` qué estrategia de detección se usó realmente
-   (queda expuesta en consola vía `strategyUsed` si añades un `console.log`
-   temporal en `page-detector.js`) y ajusta la cascada si hace falta.
+1. Un documento que exija sesión de Google iniciada (todo lo probado hasta
+   ahora fue con enlaces públicos/compartidos).
+2. Un documento apaisado o con tamaños de página mixtos real (la lógica de
+   orientación por página se probó exhaustivamente con datos sintéticos,
+   pero no contra un PDF apaisado real de Drive).
+3. Un documento largo (100+ páginas), para confirmar memoria y que la
+   virtualización no cambia de patrón a mayor escala.
+4. El caso de iframe genuino (visor incrustado en un origen de terceros).
 
 ## Licencia de terceros
 
