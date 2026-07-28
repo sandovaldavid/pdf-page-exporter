@@ -150,7 +150,7 @@ sandovaldavid.eng@gmail.com — ⚠️ confirmar; este correo aparece **pública
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 0.1.0 | — | Versión inicial: exportación a PDF con recorrido automático, tamaño de página por hoja, nombre de archivo editable, selector de calidad y barra de progreso cancelable. | Draft (sin implementar) |
+| 0.1.0 | 2026-07-27 | Versión inicial: exportación a PDF con recorrido automático, tamaño de página por hoja, nombre de archivo editable, selector de calidad y barra de progreso cancelable. Código implementado y validado sintácticamente; **sin probar aún contra un documento real de Drive** (ver Known Issues). | Draft |
 
 ## Review Notes
 
@@ -162,7 +162,8 @@ Cosas que la revisión puede señalar o que el usuario debe saber:
 2. **Dependencia del DOM de un sitio de terceros.** La extensión depende de la estructura del visor de documentos, que su propietario puede cambiar sin aviso. Si eso ocurre, la extensión avisa al usuario de que no encontró páginas en lugar de generar un PDF vacío.
 3. **Salida ráster.** El PDF contiene imágenes, no texto: no es buscable ni accesible para lectores de pantalla. Está declarado en la descripción para no inducir a error.
 4. **Fidelidad limitada.** La resolución depende del zoom del visor al exportar.
-5. **Librería de terceros empaquetada.** jsPDF viaja minificada dentro del paquete, nunca se descarga en tiempo de ejecución. Minificada, no ofuscada. ⚠️ Anotar aquí la versión exacta al implementar.
+5. **Librería de terceros empaquetada.** jsPDF 4.2.1 (MIT) viaja minificada dentro del paquete (`src/vendor/jspdf.umd.min.js`), descargada del tarball oficial de npm y verificada contra el `shasum` publicado por el registro antes de incluirla. Nunca se carga en tiempo de ejecución. Minificada, no ofuscada; el encabezado de licencia se conserva.
+6. **Sin verificación en vivo.** La implementación no se ha probado todavía contra el visor real de Google Drive ni en una instancia real de Chrome — el entorno donde se escribió el código no tenía un navegador accesible. La cascada de selectores en `page-detector.js` es una estrategia defensiva razonada, no algo medido. Ver `docs/selectors.md` y la sección "Pruebas" del `README.md`. **No publicar sin completar esta verificación primero.**
 
 ### Rejection History
 
