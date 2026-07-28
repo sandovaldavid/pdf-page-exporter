@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+  <title>PDF Page Exporter</title>
+</head>
+<body>
+  <h1>PDF Page Exporter</h1>
+
+  <div id="notDriveState" class="dpu-hint" hidden>
+    Abre un documento en el visor de Google Drive y vuelve a abrir esta ventana.
+  </div>
+
+  <form id="exportForm" hidden>
+    <label class="dpu-field">
+      <span>Nombre del archivo</span>
+      <input type="text" id="filenameInput" placeholder="documento" maxlength="150" autocomplete="off">
+    </label>
+
+    <label class="dpu-field">
+      <span>Calidad</span>
+      <select id="qualitySelect">
+        <option value="high">Alta (PNG, archivos más grandes)</option>
+        <option value="balanced" selected>Equilibrada (recomendada)</option>
+        <option value="compact">Compacta (archivos más pequeños)</option>
+      </select>
+    </label>
+
+    <label class="dpu-checkbox">
+      <input type="checkbox" id="autoScrollInput" checked>
+      <span>Recorrer el documento automáticamente</span>
+    </label>
+
+    <button type="submit" id="exportBtn">Exportar PDF</button>
+  </form>
+
+  <div id="progressState" class="dpu-progress" hidden>
+    <div class="dpu-bar-track"><div id="progressFill" class="dpu-bar-fill"></div></div>
+    <p id="progressText" class="dpu-status"></p>
+  </div>
+
+  <div id="resultState" class="dpu-result" hidden>
+    <p id="resultText"></p>
+  </div>
+
+  <p class="dpu-footer">Todo el procesamiento ocurre en tu navegador. No se envía ningún dato.</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>
