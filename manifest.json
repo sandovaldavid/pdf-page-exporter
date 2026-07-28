@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "PDF Page Exporter",
+  "version": "0.1.0",
+  "description": "Exporta a PDF las páginas de un documento que ya se muestran en el visor de tu navegador.",
+  "permissions": ["scripting", "storage"],
+  "host_permissions": [
+    "https://drive.google.com/*",
+    "https://docs.google.com/*"
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_title": "PDF Page Exporter"
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
