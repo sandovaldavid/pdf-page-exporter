@@ -1,111 +1,142 @@
+/* Consumes tokens from ../styles/tokens.css — no hardcoded colors here,
+   per design-system.md section 19 ("Evitar hardcoded colors fuera del
+   archivo central de tokens"). */
+
 body {
-  width: 300px;
-  padding: 16px;
+  width: 320px;
+  padding: var(--ds-space-6);
   margin: 0;
-  font-family: Arial, sans-serif;
-  color: #202124;
+  background: var(--ds-surface);
+  color: var(--ds-content);
+  font-family: var(--ds-font-body);
 }
 
 h1 {
-  font-size: 15px;
-  margin: 0 0 14px;
+  font-family: var(--ds-font-heading);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 22px;
+  letter-spacing: -0.2px;
+  color: var(--ds-content-strong);
+  margin: 0 0 var(--ds-space-4);
 }
 
 .dpu-hint {
   font-size: 12px;
-  color: #5f6368;
-  background: #f1f3f4;
-  padding: 10px;
-  border-radius: 4px;
+  line-height: 18px;
+  letter-spacing: 0.2px;
+  color: var(--ds-content-muted);
+  background: var(--ds-surface-highlight);
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-control);
 }
 
 .dpu-field {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: var(--ds-space-3);
+  font-family: var(--ds-font-technical);
   font-size: 12px;
-  color: #5f6368;
+  letter-spacing: 0.2px;
+  color: var(--ds-content-muted);
 }
 
 .dpu-field span {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: var(--ds-space-1);
 }
 
 .dpu-field input[type="text"],
 .dpu-field select {
   width: 100%;
   box-sizing: border-box;
-  padding: 6px 8px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: 8px var(--ds-space-3);
+  border: 1px solid var(--ds-edge);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-surface);
+  color: var(--ds-content-strong);
+  font-family: var(--ds-font-body);
+  font-size: 14px;
+}
+
+.dpu-field input[type="text"]:focus,
+.dpu-field select:focus {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 1px;
 }
 
 .dpu-checkbox {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  margin-bottom: 14px;
+  gap: var(--ds-space-2);
+  font-size: 13px;
+  color: var(--ds-content);
+  margin-bottom: var(--ds-space-4);
 }
 
 button#exportBtn {
   width: 100%;
-  background-color: #1a73e8;
-  color: white;
+  background-color: var(--ds-accent);
+  color: #ffffff;
   border: none;
-  padding: 10px;
-  border-radius: 4px;
+  padding: var(--ds-control-padding-y) var(--ds-control-padding-x);
+  border-radius: var(--ds-radius-control);
   cursor: pointer;
-  font-weight: bold;
-  font-size: 13px;
+  font-family: var(--ds-font-heading);
+  font-weight: 500;
+  font-size: 14px;
 }
 
 button#exportBtn:hover {
-  background-color: #1557b0;
+  background-color: var(--ds-accent-hover);
 }
 
 button#exportBtn:disabled {
-  background-color: #a8c7fa;
+  background-color: var(--ds-edge);
+  color: var(--ds-content-muted);
   cursor: default;
 }
 
 .dpu-bar-track {
-  background: #e8eaed;
-  border-radius: 4px;
+  background: var(--ds-surface-highlight);
+  border-radius: var(--ds-radius-full);
   height: 8px;
   overflow: hidden;
 }
 
 .dpu-bar-fill {
-  background: #1a73e8;
+  background: var(--ds-accent);
   height: 100%;
   width: 0%;
-  transition: width .15s ease;
+  transition: width 0.15s ease;
 }
 
 .dpu-status {
   font-size: 12px;
-  color: #5f6368;
-  margin: 8px 0 0;
+  color: var(--ds-content-muted);
+  margin: var(--ds-space-2) 0 0;
 }
 
 .dpu-result {
+  font-family: var(--ds-font-technical);
   font-size: 12px;
-  padding: 10px;
-  border-radius: 4px;
-  background: #e6f4ea;
-  color: #188038;
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-success-bg);
+  border: 1px solid var(--ds-success-border);
+  color: var(--ds-success-text);
 }
 
 .dpu-result.dpu-result-error {
-  background: #fce8e6;
-  color: #d93025;
+  background: color-mix(in srgb, var(--ds-error-500) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ds-error-500) 40%, transparent);
+  color: var(--ds-error-500);
 }
 
 .dpu-footer {
+  font-family: var(--ds-font-technical);
   font-size: 11px;
-  color: #80868b;
-  margin: 14px 0 0;
+  letter-spacing: 0.2px;
+  color: var(--ds-content-muted);
+  margin: var(--ds-space-4) 0 0;
   text-align: center;
 }
