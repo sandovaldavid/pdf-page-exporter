@@ -15,15 +15,17 @@ async function updateBadge(state) {
     await chrome.action.setBadgeText({ text: "" });
     return;
   }
+  // Colors match the Identity System primitives (docs/design-system.md
+  // section 7): primary-500 light, status/success/text light, error/500.
   if (state.status === "running") {
     await chrome.action.setBadgeText({ text: String(state.capturedPages ?? 0) });
-    await chrome.action.setBadgeBackgroundColor({ color: "#1a73e8" });
+    await chrome.action.setBadgeBackgroundColor({ color: "#0a5cd6" });
   } else if (state.status === "done") {
     await chrome.action.setBadgeText({ text: "OK" });
-    await chrome.action.setBadgeBackgroundColor({ color: "#188038" });
+    await chrome.action.setBadgeBackgroundColor({ color: "#065f46" });
   } else if (state.status === "error") {
     await chrome.action.setBadgeText({ text: "!" });
-    await chrome.action.setBadgeBackgroundColor({ color: "#d93025" });
+    await chrome.action.setBadgeBackgroundColor({ color: "#ff1744" });
   }
 }
 
