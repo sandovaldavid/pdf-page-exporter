@@ -10,6 +10,7 @@ function cacheElements() {
   els.autoScrollInput = document.getElementById("autoScrollInput");
   els.exportBtn = document.getElementById("exportBtn");
   els.progressState = document.getElementById("progressState");
+  els.progressTrack = document.getElementById("progressTrack");
   els.progressFill = document.getElementById("progressFill");
   els.progressText = document.getElementById("progressText");
   els.resultState = document.getElementById("resultState");
@@ -48,9 +49,15 @@ function showState(name) {
 function renderProgress(state) {
   const captured = state.capturedPages ?? 0;
   const expected = state.expectedPageCount ?? null;
-  const pct = expected ? Math.min(100, Math.round((captured / expected) * 100)) : 0;
+  // Mirrors the overlay in capture.js: a total smaller than what we already
+  // captured was misdetected, so stop quoting it.
+  const trustedTotal = expected && captured <= expected ? expected : null;
+  const pct = trustedTotal ? Math.round((captured / trustedTotal) * 100) : 0;
   els.progressFill.style.width = pct + "%";
-  els.progressText.textContent = expected ? `Página ${captured} de ${expected}` : `Página ${captured} capturada`;
+  els.progressTrack.setAttribute("aria-valuenow", String(pct));
+  els.progressText.textContent = trustedTotal
+    ? `Página ${captured} de ${trustedTotal}`
+    : `Página ${captured} capturada`;
 }
 
 function renderResult(state) {
@@ -115,9 +122,38 @@ async function handleExportSubmit(event) {
 
   els.exportBtn.disabled = true;
   try {
+    // Probe with the small detector first, then load jsPDF (420 KB) only into
+    // the frames that actually hold viewer pages. Injecting it into every frame
+    // meant re-parsing it in each sidebar/ad iframe on every single export.
     await chrome.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },
-      files: ["src/vendor/jspdf.umd.min.js", "src/content/page-detector.js", "src/content/capture.js"],
+      files: ["src/content/page-detector.js"],
+    });
+
+    const probes = await chrome.scripting.executeScript({
+      target: { tabId: tab.id, allFrames: true },
+      func: () => {
+        const detector = window.__dpuPageDetector;
+        return !!detector && detector.detectPages().pageElements.length > 0;
+      },
+    });
+
+    const frameIds = probes.filter((p) => p.result).map((p) => p.frameId);
+    if (frameIds.length === 0) {
+      // Previously this path started an export that silently did nothing,
+      // leaving the popup pinned at 0% with no way out.
+      showState("result");
+      renderResult({
+        status: "error",
+        errorMessage:
+          "No se detectaron páginas del documento en esta pestaña. Abre el documento en el visor de Drive, espera a que cargue la primera página y vuelve a intentarlo.",
+      });
+      return;
+    }
+
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id, frameIds },
+      files: ["src/vendor/jspdf.umd.min.js", "src/content/capture.js"],
     });
 
     const payload = {
@@ -127,10 +163,8 @@ async function handleExportSubmit(event) {
     };
 
     await chrome.scripting.executeScript({
-      target: { tabId: tab.id, allFrames: true },
-      func: (p) => {
-        if (typeof window.__dpuStartCapture === "function") window.__dpuStartCapture(p);
-      },
+      target: { tabId: tab.id, frameIds },
+      func: (p) => typeof window.__dpuStartCapture === "function" && window.__dpuStartCapture(p),
       args: [payload],
     });
 
@@ -167,6 +201,9 @@ function listenForLiveUpdates() {
 async function init() {
   cacheElements();
   listenForLiveUpdates();
+  // Attached before any await: if anything below throws, the form must not be
+  // left rendered but inert with a dead Export button.
+  els.exportForm.addEventListener("submit", handleExportSubmit);
 
   const prefs = await loadPreferences();
   els.qualitySelect.value = prefs.quality;
@@ -177,16 +214,15 @@ async function init() {
 
   if (driveCheck === false) {
     showState("not-drive");
-    els.exportForm.addEventListener("submit", handleExportSubmit);
     return;
   }
 
   els.filenameInput.value = suggestFilenameFromTitle(tab && tab.title);
 
-  const { state } = await chrome.runtime.sendMessage({ type: "DPU_GET_STATE" });
-  await applyState(state, tab.id);
-
-  els.exportForm.addEventListener("submit", handleExportSubmit);
+  // The service worker may be asleep or restarting — sendMessage can resolve
+  // undefined or reject outright. Neither is a reason to fail the popup.
+  const response = await chrome.runtime.sendMessage({ type: "DPU_GET_STATE" }).catch(() => null);
+  await applyState(response && response.state, tab && tab.id);
 }
 
 document.addEventListener("DOMContentLoaded", init);
