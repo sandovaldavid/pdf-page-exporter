@@ -57,10 +57,22 @@ scripts, jsPDF y la descarga— es el código real.
 - **Google Drive de verdad.** El fixture imita el DOM documentado; si Google
   cambia el visor, esto no se entera. La verificación contra documentos reales
   está en `docs/selectors.md`.
-- **Virtualización agresiva.** El fixture materializa páginas pero no las
-  desmonta. Un documento de 100+ páginas en Drive real sí puede desmontarlas,
-  y `capture.js` todavía rasteriza al final en vez de durante el scroll (ver
-  la nota de corrección en `docs/selectors.md`).
+- **La presión de memoria real.** El fixture sí desmonta páginas y revoca sus
+  `blob:` URLs (`?evict=1`), pero eso **no** basta para reproducir páginas en
+  blanco: un `<img>` desmontado conserva su bitmap decodificado mientras exista
+  una referencia JS. Se midió en ambos sentidos — aplazar la rasterización al
+  ensamblado también pasa esa prueba. El escenario que motiva rasterizar al
+  capturar es que Chrome descarte los datos decodificados de imágenes fuera del
+  árbol de render bajo presión de memoria, y eso no es reproducible de forma
+  determinista aquí. Un documento de 100+ páginas en Drive real sigue sin
+  probarse.
 - **El clic real en el icono de la barra de herramientas**, por el stub de
   `chrome.tabs.query`.
+- **Cancelar exactamente durante el ensamblado del PDF.** La guarda existe en
+  `capture.js` y se probó cuando el ensamblado rasterizaba cada página y duraba
+  segundos. Al pasar a codificar durante el scroll, el ensamblado se redujo a un
+  bucle de `addImage` sobre bytes ya listos: la ventana es de milisegundos y no
+  se puede acertar de forma fiable desde un test. La sección C cancela durante
+  el scroll, que es la fase larga y donde el usuario cancela de verdad, y
+  comprueba lo que importa: que no se descargue ningún archivo.
 - Documentos apaisados o con tamaños de página mixtos.

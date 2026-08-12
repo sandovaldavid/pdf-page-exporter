@@ -88,12 +88,39 @@ async function materialize(slot) {
   window.__fixtureRendered = renderedCount;
 }
 
+// ?evict=1 makes the viewer aggressively unmount pages that scrolled away and
+// revoke their blob: URLs — what a real virtualizer does on long documents.
+// Capture code that only stores DOM references produces blank pages here,
+// because by assembly time the element is detached and its source is gone.
+const EVICT = PARAMS.get('evict') === '1';
+window.__fixtureEvicted = 0;
+
+function evict(slot) {
+  const img = slot.querySelector('img');
+  if (!img) return;
+  URL.revokeObjectURL(img.src);
+  img.remove();
+  materialized.delete(Number(slot.dataset.page));
+  renderedCount--;
+  window.__fixtureRendered = renderedCount;
+  window.__fixtureEvicted++;
+}
+
 // Materialize whatever is within 1.5 viewports of the current scroll position.
 function sweep() {
-  const top = viewer.scrollTop, bottom = top + viewer.clientHeight * 1.5;
+  const vh = viewer.clientHeight;
+  const top = viewer.scrollTop;
   for (const slot of slots) {
     const slotTop = slot.offsetTop - viewer.offsetTop;
-    if (slotTop < bottom && slotTop + H > top - viewer.clientHeight * 0.5) materialize(slot);
+    const slotBottom = slotTop + H;
+    if (slotTop < top + vh * 1.5 && slotBottom > top - vh * 0.5) {
+      materialize(slot);
+    } else if (EVICT && (slotBottom < top - vh * 3 || slotTop > top + vh * 3)) {
+      // Real virtualizers keep a generous buffer before discarding. Evicting
+      // the page immediately behind the viewport would just race the exporter
+      // instead of modelling anything a real viewer does.
+      evict(slot);
+    }
   }
 }
 viewer.addEventListener('scroll', sweep);

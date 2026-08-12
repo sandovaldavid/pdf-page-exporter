@@ -93,18 +93,33 @@ else
 
   # The fixture paints page i with red = i*8, so page order can be decoded from
   # the PDF itself — this is what catches blank, duplicated or reordered pages.
-  pdftoppm -r 12 -png "$WORK/main20.pdf" "$WORK/pg"
-  ORDER_OK=1
-  for f in "$WORK"/pg-*.png; do
-    n=$(basename "$f" .png | sed 's/^pg-0*//')
-    r=$(magick "$f" -format "%[fx:round(p{4,4}.r*255)]" info:)
-    d=$(( (r + 4) / 8 ))
-    if [ "$d" != "$n" ]; then
-      echo "  FAIL  PDF page $n carries the payload of page $d"
-      ORDER_OK=0; FAILURES=1
-    fi
-  done
-  [ "$ORDER_OK" = 1 ] && echo "  ok    pages decode to 1..20 in order: none blank, duplicated or swapped"
+  # A blank page decodes far outside the expected range rather than matching.
+  decode_order() {
+    local pdf="$1" label="$2" prefix="$WORK/$2"
+    pdftoppm -r 12 -png "$pdf" "$prefix"
+    local ok=1
+    for f in "$prefix"-*.png; do
+      local n r d
+      n=$(basename "$f" .png | sed "s/^$label-0*//")
+      r=$(magick "$f" -format "%[fx:round(p{4,4}.r*255)]" info:)
+      d=$(( (r + 4) / 8 ))
+      if [ "$d" != "$n" ]; then
+        echo "  FAIL  $label: PDF page $n carries the payload of page $d (red=$r)"
+        ok=0; FAILURES=1
+      fi
+    done
+    [ "$ok" = 1 ] && echo "  ok    $label pages decode in order: none blank, duplicated or swapped"
+  }
+
+  decode_order "$WORK/main20.pdf" main20
+
+  if [ "$(pages "$WORK/evicted20.pdf")" = "20" ]; then
+    echo "  ok    evicted20.pdf has 20 pages despite the viewer unmounting them"
+  else
+    echo "  FAIL  evicted20.pdf has $(pages "$WORK/evicted20.pdf") pages, expected 20"
+    FAILURES=1
+  fi
+  decode_order "$WORK/evicted20.pdf" evicted20
 fi
 
 echo

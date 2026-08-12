@@ -19,6 +19,12 @@ async page => {
   const checks = [];
   const check = (name, ok, detail) => checks.push({ name, ok: !!ok, detail });
 
+  // A hung wait would otherwise surface as a bare "Timeout exceeded" with no
+  // hint about which scenario stalled. Every section announces itself so the
+  // failure report can name it.
+  let section = 'startup';
+  const enter = (name) => { section = name; };
+
   const consoleErrors = [];
   const pageErrors = [];
   context.on('page', (p) => {
@@ -26,6 +32,7 @@ async page => {
     p.on('pageerror', (e) => pageErrors.push(e.message));
   });
 
+  try {
   let [sw] = context.serviceWorkers();
   if (!sw) sw = await context.waitForEvent('serviceworker', { timeout: 20000 });
   const extensionId = sw.url().split('/')[2];
@@ -48,6 +55,11 @@ async page => {
     p.setDefaultTimeout(240000);
     await p.goto(`https://drive.google.com/file/d/${slug}/view?${query}`);
     await p.waitForFunction(() => window.__fixtureReady === true);
+    // Wait for the first page bitmap before letting any test press Export. The
+    // fixture decodes pages with a deliberate delay, and a real user cannot
+    // export a viewer that has not painted a page yet either — without this the
+    // test races the extension's own "no pages detected" guard and blames it.
+    await p.waitForFunction(() => window.__fixtureRendered >= 1, { timeout: 30000 });
     const tab = await sw.evaluate(async (s) => {
       const t = (await chrome.tabs.query({ url: `https://drive.google.com/file/d/${s}/*` }))[0];
       return { id: t.id, url: t.url, title: t.title };
@@ -89,9 +101,9 @@ async page => {
   };
 
   // ============================================================ A. Happy path
+  enter('A: happy path, 20 pages');
   {
     const { p, tab } = await openDoc('MAIN', 'pages=20');
-    await p.waitForFunction(() => window.__fixtureRendered >= 1);
     const before = await p.evaluate(() => window.__fixtureRendered);
     const slots = await p.evaluate(() => document.querySelectorAll('.page-slot').length);
     check('fixture virtualizes (few bitmaps before export)', slots === 20 && before < 6,
@@ -156,6 +168,7 @@ async page => {
   }
 
   // ================================== B. No detectable pages (finding #1)
+  enter('B: document with no pages');
   {
     await context.route('https://drive.google.com/empty', (r) =>
       r.fulfill({
@@ -198,56 +211,64 @@ async page => {
       injected.every((v) => v === 'undefined'), JSON.stringify(injected));
   }
 
-  // ======================= C. Cancel during PDF assembly (finding #5)
+  // ============================ C. Cancel must abort the export (finding #5)
+  //
+  // This cancels during the SCROLL phase, not during PDF assembly, and that is
+  // deliberate. Assembly used to rasterize every page and ran for many seconds,
+  // which is what made a cancel there matter — and an earlier revision of this
+  // suite proved the guard works, catching the click with the overlay reading
+  // "Generando PDF…" and confirming no download followed. Encoding pages during
+  // the scroll shrank assembly to a loop of addImage calls over ready bytes, so
+  // that window is now milliseconds and cannot be hit reliably from a test.
+  //
+  // The guard stays in capture.js because it is correct and free. What is
+  // asserted here is the part that still has a meaningful window and is what
+  // users actually do: cancel while the document is being scrolled, and get no
+  // file.
+  enter('C: cancel aborts the export');
   {
-    const { p, tab } = await openDoc('CANCEL', 'pages=25');
-    // Arm the click so it lands inside the assembly loop: the loop only yields
-    // every 5 pages, so a round trip from the test runner would race it.
-    await p.evaluate(() => {
-      window.__cancel = { clickedAt: null, statusWhenClicked: null };
-      const obs = new MutationObserver(() => {
-        const s = document.querySelector('.dpu-status');
-        if (!s || window.__cancel.clickedAt) return;
-        if (s.textContent.includes('Generando PDF')) {
-          window.__cancel.clickedAt = Date.now();
-          window.__cancel.statusWhenClicked = s.textContent.trim();
-          document.querySelector('.dpu-cancel').click();
-        }
-      });
-      obs.observe(document.body, { subtree: true, childList: true, characterData: true });
-    });
+    const { p, tab } = await openDoc('CANCEL', 'pages=20');
 
     let downloaded = false;
     const onDownload = () => { downloaded = true; };
     context.on('download', onDownload);
 
     const pop = await openPopup(tab);
-    await pop.selectOption('#qualitySelect', 'high'); // PNG: slowest assembly
     await pop.click('#exportBtn');
 
-    await p.waitForFunction(() => window.__cancel.clickedAt !== null);
+    // Let the export get properly under way before cancelling.
+    await p.waitForFunction(
+      () => (window.__timeline || []).some((t) => /^Página \d+ de \d+$/.test(t)),
+      { timeout: 60000 }
+    );
+    const statusAtCancel = await p.evaluate(() => {
+      const s = document.querySelector('.dpu-status').textContent.trim();
+      document.querySelector('.dpu-cancel').click();
+      return s;
+    });
+    check('cancel was clicked mid-export, not before it started',
+      /^Página \d+ de \d+$/.test(statusAtCancel), statusAtCancel);
+
     await p.waitForFunction(() => {
       const s = document.querySelector('.dpu-status');
       return s && s.textContent.trim() === 'Cancelado';
-    });
-    const cancelInfo = await p.evaluate(() => window.__cancel);
-    check('cancel click landed during PDF assembly, not during scrolling',
-      cancelInfo.statusWhenClicked.includes('Generando PDF'), cancelInfo.statusWhenClicked);
+    }, { timeout: 30000 });
 
-    await pop.waitForFunction(() => !document.getElementById('resultState').hidden);
+    await pop.waitForFunction(() => !document.getElementById('resultState').hidden, { timeout: 30000 });
     check('popup reports the cancellation',
       (await pop.evaluate(() => document.getElementById('resultText').textContent))
         .includes('cancelada por el usuario'));
 
-    // An ignored cancel would still finish and download. Give it room to.
+    // An ignored cancel would still run to completion and download. Give it room.
     await p.waitForTimeout(8000);
     context.off('download', onDownload);
-    check('cancelling during assembly prevents the download', downloaded === false);
+    check('cancelling produces no file', downloaded === false);
   }
 
   // ============================================ D. Escape cancels too
+  enter('D: escape cancels');
   {
-    const { p, tab } = await openDoc('ESC', 'pages=25');
+    const { p, tab } = await openDoc('ESC', 'pages=15');
     const pop = await openPopup(tab);
     await pop.selectOption('#qualitySelect', 'high');
     await pop.click('#exportBtn');
@@ -262,6 +283,7 @@ async page => {
   }
 
   // ================ E. Popup survives a service worker that never answers (#6)
+  enter('E: service worker down');
   {
     const { tab } = await openDoc('SWDOWN', 'pages=3');
     const pop = await openPopup(tab, true);
@@ -275,6 +297,7 @@ async page => {
   }
 
   // ========== F. Toolbar advertising the wrong total must not show "9 de 5"
+  enter('F: wrong advertised total');
   {
     const { p, tab } = await openDoc('WRONG', 'pages=9&label=5');
     const pop = await openPopup(tab);
@@ -294,8 +317,39 @@ async page => {
       (await pop.evaluate(() => document.getElementById('resultText').textContent)) === 'PDF descargado: 9 páginas');
   }
 
+  // ===== G. Aggressive virtualization: pages unmounted and blob: URLs revoked
+  //
+  // Honest scope: this does NOT prove that rasterizing at capture time is
+  // required. Measured both ways — a detached <img> keeps its decoded bitmap
+  // while a JS reference to it is alive, so deferring rasterization to assembly
+  // time passes this too. The failure mode that motivates capturing early is
+  // Chrome discarding decoded data for out-of-tree images under memory
+  // pressure, which is not deterministically reproducible here. What this check
+  // does prove is that an export completes correctly while the viewer is
+  // unmounting pages underneath it.
+  enter('G: aggressive virtualization');
+  {
+    const { p, tab } = await openDoc('EVICT', 'pages=20&evict=1');
+    const pop = await openPopup(tab);
+    await pop.fill('#filenameInput', 'evicted20');
+    const dl = context.waitForEvent('download');
+    await pop.click('#exportBtn');
+    await (await dl).saveAs(OUT + '/evicted20.pdf');
+
+    const evicted = await p.evaluate(() => window.__fixtureEvicted);
+    const stillInDom = await p.evaluate(() => document.querySelectorAll('img[src^="blob:"]').length);
+    check('the viewer really did unmount pages mid-export', evicted > 0, `${evicted} evictions`);
+    check('most pages are gone from the DOM by the end', stillInDom < 20, `${stillInDom} still present`);
+    check('export survives pages being unmounted and their blob URLs revoked',
+      (await pop.evaluate(() => document.getElementById('resultText').textContent)) === 'PDF descargado: 20 páginas');
+  }
+
   check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | '));
   check('no uncaught page exceptions', pageErrors.length === 0, pageErrors.join(' | '));
 
   return { checks, failed: checks.filter((c) => !c.ok).length };
+  } catch (err) {
+    checks.push({ name: `section "${section}" did not finish`, ok: false, detail: String(err && err.message).slice(0, 200) });
+    return { checks, failed: checks.filter((c) => !c.ok).length, stalledIn: section };
+  }
 }

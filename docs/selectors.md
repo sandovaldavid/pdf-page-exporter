@@ -38,16 +38,20 @@ Hallazgos clave:
 - **`blob-image` es la estrategia correcta y suficiente** en ambas variantes del visor (embebido y de producción). `canvas` nunca se necesitó — el visor real de Google usa imágenes con `blob:` URL, no `<canvas>` directamente.
 - **La virtualización es real y activa**: en el documento de 12 páginas, solo ~3 páginas tenían un `<img src="blob:...">` en el DOM al cargar; el resto aparece progresivamente al hacer scroll.
 
-  > ⚠️ **Corrección (revisión de código).** Una versión anterior de esta nota
-  > afirmaba que `capture.js` "captura durante el scroll (no después)". **No es
-  > lo que hace el código.** `captureNewlyRenderedPages()` solo acumula
-  > *referencias al DOM*; el `drawImage` real ocurre al final, en el bucle de
-  > generación del PDF. Con 12 páginas funcionó porque Drive mantuvo vivos esos
-  > `<img>`, pero si el visor los desmonta o revoca sus `blob:` URLs antes de
-  > terminar, las páginas saldrán en blanco **sin ningún error**. Es un riesgo
-  > latente, no un fallo observado — y es exactamente el escenario del punto
-  > pendiente "documentos muy largos (100+ páginas)" de más abajo. Rasterizar
-  > en el momento de la detección sigue siendo la corrección pendiente.
+  > ℹ️ **Nota (revisión de 2026-08-12).** Una versión anterior de esta nota
+  > afirmaba que `capture.js` "captura durante el scroll (no después)". En su
+  > momento **no era cierto**: `captureNewlyRenderedPages()` solo acumulaba
+  > *referencias al DOM* y el `drawImage` ocurría al final. **Ahora sí lo es**:
+  > cada página se rasteriza y codifica en el momento en que se detecta, y el
+  > ensamblado solo maneja bytes ya listos.
+  >
+  > Precisión sobre el motivo: se midió, y desmontar el `<img>` y revocar su
+  > `blob:` URL **no** basta para producir páginas en blanco — un elemento
+  > separado del DOM conserva su bitmap decodificado mientras exista una
+  > referencia JS. El caso que justifica capturar pronto es que Chrome descarte
+  > los datos decodificados bajo presión de memoria, que no se ha reproducido de
+  > forma determinista. El beneficio medido y seguro es el de memoria: se
+  > guardan bytes codificados en vez de bitmaps vivos.
 - **El contenedor scrollable tiene la MISMA clase** (`ndfHFb-c4YZDc-cYSp0e-s2gQvd ndfHFb-c4YZDc-s2gQvd`) en ambas variantes del visor — indicio de que comparten el mismo componente interno. Nota: esta clase contiene el fragmento `ndfHFb`, el mismo que usa la estrategia 3 (`legacy-class-fragment`) — confirma que ese prefijo sigue existiendo en producción, aunque como contenedor, no como selector útil de páginas individuales (por sí solo matcheó 207–595 elementos, inútil sin la cascada).
 - **`detectExpectedPageCount()` funciona en español e inglés** — probado con `"Page 1 of 3"` y `"Página 1 de 12"`, ambos extraídos correctamente por el regex `(\d+)\s*(?:\/|of|de)\s*(\d+)`.
 - **Bugs reales encontrados y corregidos durante esta verificación** (no eran visibles por revisión estática de código):
