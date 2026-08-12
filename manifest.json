@@ -3,6 +3,7 @@
   "name": "PDF Page Exporter",
   "version": "0.1.0",
   "description": "Exporta a PDF las páginas de un documento que ya se muestran en el visor de tu navegador.",
+  "minimum_chrome_version": "111",
   "permissions": ["scripting", "storage"],
   "host_permissions": [
     "https://drive.google.com/*",
