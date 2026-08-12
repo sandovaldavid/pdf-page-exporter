@@ -48,6 +48,9 @@
       .dpu-cancel { width: 100%; background: #fff; border: 1px solid #cbd5e1; color: #ff1744;
         padding: 8px; border-radius: 8px; cursor: pointer; font-weight: bold; }
       .dpu-cancel:hover { background: color-mix(in srgb, #ff1744 8%, transparent); }
+      @media (prefers-reduced-motion: reduce) {
+        .dpu-bar-fill { transition: none; }
+      }
       @media (prefers-color-scheme: dark) {
         .dpu-card { background: #0a0d14; border-color: #1e293b; }
         .dpu-title { color: #f1f5f9; }
@@ -62,32 +65,55 @@
     const overlay = document.createElement("div");
     overlay.className = "dpu-overlay";
     overlay.innerHTML = `
-      <div class="dpu-card">
-        <p class="dpu-title">Exportando PDF…</p>
-        <div class="dpu-bar-track"><div class="dpu-bar-fill"></div></div>
-        <p class="dpu-status">Preparando…</p>
+      <div class="dpu-card" role="dialog" aria-modal="true" aria-labelledby="dpu-title">
+        <p class="dpu-title" id="dpu-title">Exportando PDF…</p>
+        <div class="dpu-bar-track" role="progressbar" aria-labelledby="dpu-title"
+             aria-valuemin="0" aria-valuemax="100"><div class="dpu-bar-fill"></div></div>
+        <p class="dpu-status" role="status" aria-live="polite">Preparando…</p>
         <button class="dpu-cancel" type="button">Cancelar</button>
       </div>
     `;
     document.body.appendChild(overlay);
 
     const fill = overlay.querySelector(".dpu-bar-fill");
+    const track = overlay.querySelector(".dpu-bar-track");
     const status = overlay.querySelector(".dpu-status");
     const cancelBtn = overlay.querySelector(".dpu-cancel");
     let cancelled = false;
-    cancelBtn.addEventListener("click", () => {
+
+    const cancel = () => {
+      if (cancelled) return;
       cancelled = true;
       status.textContent = "Cancelando…";
-    });
+    };
+    cancelBtn.addEventListener("click", cancel);
+    // ponytail: Escape + initial focus, no full focus trap. The overlay holds a
+    // single control, so tabbing out lands on the host page rather than
+    // somewhere invisible. Add a trap if the overlay ever grows more controls.
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        cancel();
+      }
+    };
+    overlay.addEventListener("keydown", onKeyDown);
+    cancelBtn.focus();
 
     return {
       get cancelled() {
         return cancelled;
       },
       update(captured, expected) {
-        const pct = expected ? Math.min(100, Math.round((captured / expected) * 100)) : 0;
+        // Capturing more pages than the toolbar advertised means the detected
+        // total was wrong, not that we are at 275% — drop the bogus total
+        // rather than rendering "Página 33 de 12".
+        const trustedTotal = expected && captured <= expected ? expected : null;
+        const pct = trustedTotal ? Math.round((captured / trustedTotal) * 100) : 0;
         fill.style.width = pct + "%";
-        status.textContent = expected ? `Página ${captured} de ${expected}` : `Página ${captured} capturada`;
+        track.setAttribute("aria-valuenow", String(pct));
+        status.textContent = trustedTotal
+          ? `Página ${captured} de ${trustedTotal}`
+          : `Página ${captured} capturada`;
       },
       setStatus(text) {
         status.textContent = text;
@@ -121,57 +147,54 @@
     });
   }
 
-  function reportProgress(capturedPages, expectedPageCount) {
-    chrome.runtime.sendMessage({ type: "DPU_EXPORT_PROGRESS", payload: { capturedPages, expectedPageCount } });
+  // The popup may be closed and the service worker may be asleep or mid-restart;
+  // a dropped progress report must never surface as an unhandled rejection in
+  // the host page's console.
+  function report(type, payload) {
+    chrome.runtime.sendMessage({ type, payload }).catch(() => {});
   }
 
-  function reportDone(capturedPages, expectedPageCount) {
-    chrome.runtime.sendMessage({ type: "DPU_EXPORT_DONE", payload: { capturedPages, expectedPageCount } });
-  }
+  const reportProgress = (capturedPages, expectedPageCount) =>
+    report("DPU_EXPORT_PROGRESS", { capturedPages, expectedPageCount });
+  const reportDone = (capturedPages, expectedPageCount) =>
+    report("DPU_EXPORT_DONE", { capturedPages, expectedPageCount });
+  const reportError = (errorMessage) => report("DPU_EXPORT_ERROR", { errorMessage });
 
-  function reportError(errorMessage) {
-    chrome.runtime.sendMessage({ type: "DPU_EXPORT_ERROR", payload: { errorMessage } });
-  }
-
-  async function runCapture(payload) {
-    const detector = window.__dpuPageDetector;
-    if (!detector) return; // detector script failed to load in this frame
-
-    const initial = detector.detectPages();
-    if (initial.pageElements.length === 0) {
-      // No viewer content in this frame (e.g. a sidebar iframe) — stay silent.
-      return;
-    }
-
-    if (window.__dpuCaptureRunning) return;
-    window.__dpuCaptureRunning = true;
-
+  async function runCapture(payload, detector, initial) {
     const overlay = createOverlay();
     const quality = QUALITY_PRESETS[payload.quality] || QUALITY_PRESETS.balanced;
     const { naturalSize } = detector;
 
     try {
       const scrollContainer = initial.scrollContainer;
-      const expectedPageCount = initial.expectedPageCount;
-      const capturedElements = [];
+      // Read once — see detectExpectedPageCount()'s note in page-detector.js.
+      const expectedPageCount = detector.detectExpectedPageCount();
+      // Keyed by element identity, valued by position in the document.
+      //
+      // Matching by index instead (pageElements.slice(captured.length)) assumed
+      // pages finish rendering in document order. They do not: a viewer that
+      // decodes pages in parallel can finish page 16 before page 14, which slid
+      // page 16 into slot 14 and then duplicated it. Identity + an explicit
+      // position makes the capture order-independent.
+      const captured = new Map();
       let stepsWithoutProgress = 0;
       let consecutiveEmptySteps = 0;
 
       const captureNewlyRenderedPages = () => {
         const { pageElements } = detector.detectPages();
-        const pending = pageElements.slice(capturedElements.length);
         let capturedAny = false;
-        for (const el of pending) {
-          if (!isRendered(el, naturalSize)) break; // stop at first not-yet-rendered page; keep order
-          capturedElements.push(el);
+        for (const el of pageElements) {
+          if (captured.has(el)) continue;
+          if (!isRendered(el, naturalSize)) continue; // not ready yet; a later sweep will pick it up
+          captured.set(el, detector.absoluteTop(el, scrollContainer));
           capturedAny = true;
         }
         return capturedAny;
       };
 
       captureNewlyRenderedPages();
-      overlay.update(capturedElements.length, expectedPageCount);
-      reportProgress(capturedElements.length, expectedPageCount);
+      overlay.update(captured.size, expectedPageCount);
+      reportProgress(captured.size, expectedPageCount);
 
       const canScroll =
         payload.autoScroll !== false && scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight + 10;
@@ -180,7 +203,8 @@
         while (!overlay.cancelled) {
           const before = scrollContainer.scrollTop;
           const step = scrollContainer.clientHeight * SCROLL_STEP_RATIO;
-          scrollContainer.scrollTop = Math.min(before + step, scrollContainer.scrollHeight);
+          const maxScrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+          scrollContainer.scrollTop = Math.min(before + step, maxScrollTop);
 
           // After one empty step, back off to a short timeout: if nothing
           // rendered within a full wait, further waits at this scroll
@@ -190,8 +214,8 @@
           const capturedSomething = await waitFor(captureNewlyRenderedPages, timeout, RENDER_POLL_INTERVAL_MS);
           consecutiveEmptySteps = capturedSomething ? 0 : consecutiveEmptySteps + 1;
 
-          overlay.update(capturedElements.length, expectedPageCount);
-          reportProgress(capturedElements.length, expectedPageCount);
+          overlay.update(captured.size, expectedPageCount);
+          reportProgress(captured.size, expectedPageCount);
 
           const reachedBottom =
             scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 2;
@@ -210,7 +234,7 @@
         return;
       }
 
-      if (capturedElements.length === 0) {
+      if (captured.size === 0) {
         overlay.setStatus("No se detectaron páginas");
         reportError("No se detectaron páginas del documento");
         setTimeout(() => overlay.remove(), 2500);
@@ -222,8 +246,21 @@
       const { jsPDF } = window.jspdf;
       let doc = null;
 
-      for (let i = 0; i < capturedElements.length; i++) {
-        const el = capturedElements[i];
+      // Pages go into the PDF in document order, which is not the order they
+      // finished rendering in.
+      const orderedElements = Array.from(captured.entries())
+        .sort((a, b) => a[1] - b[1])
+        .map(([el]) => el);
+
+      for (let i = 0; i < orderedElements.length; i++) {
+        if (overlay.cancelled) {
+          overlay.setStatus("Cancelado");
+          reportError("Exportación cancelada por el usuario");
+          setTimeout(() => overlay.remove(), 1200);
+          return;
+        }
+
+        const el = orderedElements[i];
         const { width, height } = naturalSize(el);
         const orientation = width >= height ? "landscape" : "portrait";
         const pdfWidth = width * PDF_UNIT_SCALE;
@@ -236,6 +273,12 @@
         const ctx = pageCanvas.getContext("2d");
         try {
           ctx.drawImage(el, 0, 0, width, height);
+          // drawImage does NOT throw on a cross-origin source — it silently
+          // taints the canvas, and the SecurityError only surfaces later inside
+          // jsPDF's toDataURL call, as an opaque vendor stack trace. Probe one
+          // pixel here so the failure is attributed to the right page with a
+          // message the user can act on.
+          ctx.getImageData(0, 0, 1, 1);
         } catch {
           throw new Error(`No se pudo leer la página ${i + 1}: el navegador bloqueó el acceso a la imagen.`);
         }
@@ -264,13 +307,13 @@
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-      const incomplete = expectedPageCount != null && capturedElements.length < expectedPageCount;
+      const incomplete = expectedPageCount != null && captured.size < expectedPageCount;
       overlay.setStatus(
         incomplete
-          ? `Descargado con ${capturedElements.length} de ${expectedPageCount} páginas (incompleto)`
-          : `Descargado: ${capturedElements.length} páginas`
+          ? `Descargado con ${captured.size} de ${expectedPageCount} páginas (incompleto)`
+          : `Descargado: ${captured.size} páginas`
       );
-      reportDone(capturedElements.length, expectedPageCount);
+      reportDone(captured.size, expectedPageCount);
       setTimeout(() => overlay.remove(), 3000);
     } catch (err) {
       overlay.setStatus("Error: " + (err && err.message ? err.message : String(err)));
@@ -281,7 +324,21 @@
     }
   }
 
+  // Returns true only if THIS frame owns viewer content and has started an
+  // export. The popup injects into every frame and needs a way to tell "the
+  // sidebar iframe correctly did nothing" apart from "detection failed
+  // everywhere" — otherwise a DOM change on Google's side leaves the popup
+  // stuck at 0% forever with no error.
   window.__dpuStartCapture = function (payload) {
-    runCapture(payload);
+    const detector = window.__dpuPageDetector;
+    if (!detector) return false; // detector script failed to load in this frame
+    if (window.__dpuCaptureRunning) return false;
+
+    const initial = detector.detectPages();
+    if (initial.pageElements.length === 0) return false; // e.g. a sidebar iframe
+
+    window.__dpuCaptureRunning = true;
+    runCapture(payload, detector, initial);
+    return true;
   };
 })();

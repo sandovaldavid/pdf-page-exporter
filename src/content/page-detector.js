@@ -55,7 +55,7 @@
 
   function findScrollContainer(pageElements) {
     if (pageElements.length === 0) return null;
-    let node = pageElements[0];
+    let node = pageElements[0].parentElement; // the page <img>/<canvas> itself never scrolls
     while (node && node !== document.body) {
       if (node.scrollHeight > node.clientHeight + 10) return node;
       node = node.parentElement;
@@ -63,10 +63,17 @@
     return document.scrollingElement || document.documentElement;
   }
 
+  // Position of an element within the scrolled document, NOT within the
+  // viewport. capture.js compares positions across sweeps taken at different
+  // scroll offsets, so the container's scrollTop has to be folded in: a
+  // viewport-relative top is only comparable within a single sweep.
+  function absoluteTop(el, scrollContainer) {
+    return el.getBoundingClientRect().top + (scrollContainer ? scrollContainer.scrollTop : 0);
+  }
+
   function orderByPosition(pageElements, scrollContainer) {
-    const containerTop = scrollContainer ? scrollContainer.scrollTop : 0;
     return pageElements
-      .map((el) => ({ el, top: el.getBoundingClientRect().top + containerTop }))
+      .map((el) => ({ el, top: absoluteTop(el, scrollContainer) }))
       .sort((a, b) => a.top - b.top)
       .map((entry) => entry.el);
   }
@@ -74,6 +81,11 @@
   // Best-effort: the viewer toolbar usually shows a "Page X of Y" style
   // label. Returns null (unknown) rather than guessing when not found — the
   // UI must never claim false certainty about the total page count.
+  //
+  // Deliberately NOT part of detectPages(): this walks the whole document with
+  // a case-insensitive attribute-substring selector, and detectPages() runs on
+  // a 100ms poll during the scroll loop. The total page count is read once, at
+  // the start of an export.
   function detectExpectedPageCount() {
     const candidates = document.querySelectorAll('[aria-label*="page" i], [aria-label*="página" i]');
     for (const el of candidates) {
@@ -91,9 +103,8 @@
       pageElements: orderByPosition(elements, scrollContainer),
       scrollContainer,
       strategyUsed,
-      expectedPageCount: detectExpectedPageCount(),
     };
   }
 
-  window.__dpuPageDetector = { detectPages, naturalSize };
+  window.__dpuPageDetector = { detectPages, detectExpectedPageCount, absoluteTop, naturalSize };
 })();
