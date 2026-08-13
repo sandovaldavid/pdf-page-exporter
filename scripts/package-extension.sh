@@ -11,6 +11,7 @@ OUTPUT="${EXTENSION_NAME}-v${VERSION}.zip"
 rm -f "$OUTPUT"
 
 zip -r "$OUTPUT" . \
+  -x "*.zip" \
   -x ".git/*" \
   -x ".github/*" \
   -x ".agents/*" \

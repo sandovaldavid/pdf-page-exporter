@@ -14,11 +14,18 @@
   const RENDER_WAIT_TIMEOUT_MS = 4000;
   const RENDER_POLL_INTERVAL_MS = 100;
   const MAX_SCROLL_STEPS_WITHOUT_PROGRESS = 5;
+  // Settle pass after scrolling stops: keep sweeping until no new page has
+  // appeared for SETTLE_QUIET_MS, capped at SETTLE_MAX_MS.
+  const SETTLE_POLL_MS = 150;
+  const SETTLE_QUIET_MS = 500;
+  const SETTLE_MAX_MS = 8000;
 
+  // Pages are encoded by the canvas at capture time, so the preset drives
+  // canvas.toDataURL directly instead of jsPDF's own re-compression.
   const QUALITY_PRESETS = {
-    high: { pdfFormat: "PNG", compression: undefined },
-    balanced: { pdfFormat: "JPEG", compression: "MEDIUM" },
-    compact: { pdfFormat: "JPEG", compression: "FAST" },
+    high: { pdfFormat: "PNG", mimeType: "image/png", encoderQuality: undefined },
+    balanced: { pdfFormat: "JPEG", mimeType: "image/jpeg", encoderQuality: 0.82 },
+    compact: { pdfFormat: "JPEG", mimeType: "image/jpeg", encoderQuality: 0.6 },
   };
 
   function sanitizeFilename(name) {
@@ -48,6 +55,9 @@
       .dpu-cancel { width: 100%; background: #fff; border: 1px solid #cbd5e1; color: #ff1744;
         padding: 8px; border-radius: 8px; cursor: pointer; font-weight: bold; }
       .dpu-cancel:hover { background: color-mix(in srgb, #ff1744 8%, transparent); }
+      @media (prefers-reduced-motion: reduce) {
+        .dpu-bar-fill { transition: none; }
+      }
       @media (prefers-color-scheme: dark) {
         .dpu-card { background: #0a0d14; border-color: #1e293b; }
         .dpu-title { color: #f1f5f9; }
@@ -62,32 +72,55 @@
     const overlay = document.createElement("div");
     overlay.className = "dpu-overlay";
     overlay.innerHTML = `
-      <div class="dpu-card">
-        <p class="dpu-title">Exportando PDF…</p>
-        <div class="dpu-bar-track"><div class="dpu-bar-fill"></div></div>
-        <p class="dpu-status">Preparando…</p>
+      <div class="dpu-card" role="dialog" aria-modal="true" aria-labelledby="dpu-title">
+        <p class="dpu-title" id="dpu-title">Exportando PDF…</p>
+        <div class="dpu-bar-track" role="progressbar" aria-labelledby="dpu-title"
+             aria-valuemin="0" aria-valuemax="100"><div class="dpu-bar-fill"></div></div>
+        <p class="dpu-status" role="status" aria-live="polite">Preparando…</p>
         <button class="dpu-cancel" type="button">Cancelar</button>
       </div>
     `;
     document.body.appendChild(overlay);
 
     const fill = overlay.querySelector(".dpu-bar-fill");
+    const track = overlay.querySelector(".dpu-bar-track");
     const status = overlay.querySelector(".dpu-status");
     const cancelBtn = overlay.querySelector(".dpu-cancel");
     let cancelled = false;
-    cancelBtn.addEventListener("click", () => {
+
+    const cancel = () => {
+      if (cancelled) return;
       cancelled = true;
       status.textContent = "Cancelando…";
-    });
+    };
+    cancelBtn.addEventListener("click", cancel);
+    // ponytail: Escape + initial focus, no full focus trap. The overlay holds a
+    // single control, so tabbing out lands on the host page rather than
+    // somewhere invisible. Add a trap if the overlay ever grows more controls.
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        cancel();
+      }
+    };
+    overlay.addEventListener("keydown", onKeyDown);
+    cancelBtn.focus();
 
     return {
       get cancelled() {
         return cancelled;
       },
       update(captured, expected) {
-        const pct = expected ? Math.min(100, Math.round((captured / expected) * 100)) : 0;
+        // Capturing more pages than the toolbar advertised means the detected
+        // total was wrong, not that we are at 275% — drop the bogus total
+        // rather than rendering "Página 33 de 12".
+        const trustedTotal = expected && captured <= expected ? expected : null;
+        const pct = trustedTotal ? Math.round((captured / trustedTotal) * 100) : 0;
         fill.style.width = pct + "%";
-        status.textContent = expected ? `Página ${captured} de ${expected}` : `Página ${captured} capturada`;
+        track.setAttribute("aria-valuenow", String(pct));
+        status.textContent = trustedTotal
+          ? `Página ${captured} de ${trustedTotal}`
+          : `Página ${captured} capturada`;
       },
       setStatus(text) {
         status.textContent = text;
@@ -97,6 +130,39 @@
         style.remove();
       },
     };
+  }
+
+  // Copy a page's pixels out of the viewer NOW, while the element is still
+  // alive, and hand back only the encoded bytes.
+  //
+  // Holding the DOM element and rasterizing later is what made long documents
+  // unsafe: the viewer virtualizes, and a page that scrolled out of view can
+  // be detached and have its blob: URL revoked before assembly runs, which
+  // silently yields a blank page. Encoding here also drops peak memory by
+  // roughly an order of magnitude versus keeping every page as a live bitmap.
+  function rasterize(el, naturalSize, quality, pageNumber) {
+    const { width, height } = naturalSize(el);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    let dataUrl;
+    try {
+      ctx.drawImage(el, 0, 0, width, height);
+      // drawImage does NOT throw on a cross-origin source — it silently taints
+      // the canvas, and the SecurityError only surfaces inside toDataURL. Probe
+      // one pixel so the failure names the page the user can act on.
+      ctx.getImageData(0, 0, 1, 1);
+      dataUrl = canvas.toDataURL(quality.mimeType, quality.encoderQuality);
+    } catch {
+      throw new Error(`No se pudo leer la página ${pageNumber}: el navegador bloqueó el acceso a la imagen.`);
+    } finally {
+      canvas.width = 0;
+      canvas.height = 0; // release the backing pixel buffer right away
+    }
+
+    return { dataUrl, width, height };
   }
 
   function isRendered(el, naturalSize) {
@@ -121,57 +187,69 @@
     });
   }
 
-  function reportProgress(capturedPages, expectedPageCount) {
-    chrome.runtime.sendMessage({ type: "DPU_EXPORT_PROGRESS", payload: { capturedPages, expectedPageCount } });
+  // The popup may be closed and the service worker may be asleep or mid-restart;
+  // a dropped progress report must never surface as an unhandled rejection in
+  // the host page's console.
+  function report(type, payload) {
+    chrome.runtime.sendMessage({ type, payload }).catch(() => {});
   }
 
-  function reportDone(capturedPages, expectedPageCount) {
-    chrome.runtime.sendMessage({ type: "DPU_EXPORT_DONE", payload: { capturedPages, expectedPageCount } });
-  }
+  const reportProgress = (capturedPages, expectedPageCount) =>
+    report("DPU_EXPORT_PROGRESS", { capturedPages, expectedPageCount });
+  const reportDone = (capturedPages, expectedPageCount) =>
+    report("DPU_EXPORT_DONE", { capturedPages, expectedPageCount });
+  const reportError = (errorMessage) => report("DPU_EXPORT_ERROR", { errorMessage });
 
-  function reportError(errorMessage) {
-    chrome.runtime.sendMessage({ type: "DPU_EXPORT_ERROR", payload: { errorMessage } });
-  }
-
-  async function runCapture(payload) {
-    const detector = window.__dpuPageDetector;
-    if (!detector) return; // detector script failed to load in this frame
-
-    const initial = detector.detectPages();
-    if (initial.pageElements.length === 0) {
-      // No viewer content in this frame (e.g. a sidebar iframe) — stay silent.
-      return;
-    }
-
-    if (window.__dpuCaptureRunning) return;
-    window.__dpuCaptureRunning = true;
-
+  async function runCapture(payload, detector, initial) {
     const overlay = createOverlay();
     const quality = QUALITY_PRESETS[payload.quality] || QUALITY_PRESETS.balanced;
     const { naturalSize } = detector;
 
     try {
       const scrollContainer = initial.scrollContainer;
-      const expectedPageCount = initial.expectedPageCount;
-      const capturedElements = [];
+      // Read once — see detectExpectedPageCount()'s note in page-detector.js.
+      const expectedPageCount = detector.detectExpectedPageCount();
+      // Keyed by the page's position in the document, valued by its encoded
+      // bytes. Position is the only stable identifier a virtualized viewer
+      // offers:
+      //
+      // - Index is wrong. pageElements.slice(captured.length) assumed pages
+      //   finish rendering in document order; a viewer decoding in parallel can
+      //   finish page 16 before page 14, which slid 16 into slot 14 and then
+      //   duplicated it.
+      // - Element identity is wrong too. A page that scrolls away can be
+      //   unmounted and remounted as a NEW element (captured twice), and a
+      //   viewer that recycles one element for several pages would make
+      //   different pages look like the same one (captured once).
+      //
+      // Rounded to 10px so sub-pixel layout jitter cannot split one page in two.
+      const POSITION_TOLERANCE_PX = 10;
+      const captured = new Map();
       let stepsWithoutProgress = 0;
       let consecutiveEmptySteps = 0;
 
+      // Only meaningful when the toolbar gave us a total we trust.
+      const pagesStillMissing = () => expectedPageCount != null && captured.size < expectedPageCount;
+
       const captureNewlyRenderedPages = () => {
         const { pageElements } = detector.detectPages();
-        const pending = pageElements.slice(capturedElements.length);
         let capturedAny = false;
-        for (const el of pending) {
-          if (!isRendered(el, naturalSize)) break; // stop at first not-yet-rendered page; keep order
-          capturedElements.push(el);
+        for (const el of pageElements) {
+          if (!isRendered(el, naturalSize)) continue; // not ready yet; a later sweep will pick it up
+          const top = detector.absoluteTop(el, scrollContainer);
+          const key = Math.round(top / POSITION_TOLERANCE_PX);
+          if (captured.has(key)) continue;
+          const page = rasterize(el, naturalSize, quality, captured.size + 1);
+          page.top = top;
+          captured.set(key, page);
           capturedAny = true;
         }
         return capturedAny;
       };
 
       captureNewlyRenderedPages();
-      overlay.update(capturedElements.length, expectedPageCount);
-      reportProgress(capturedElements.length, expectedPageCount);
+      overlay.update(captured.size, expectedPageCount);
+      reportProgress(captured.size, expectedPageCount);
 
       const canScroll =
         payload.autoScroll !== false && scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight + 10;
@@ -180,18 +258,28 @@
         while (!overlay.cancelled) {
           const before = scrollContainer.scrollTop;
           const step = scrollContainer.clientHeight * SCROLL_STEP_RATIO;
-          scrollContainer.scrollTop = Math.min(before + step, scrollContainer.scrollHeight);
+          const maxScrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+          scrollContainer.scrollTop = Math.min(before + step, maxScrollTop);
 
-          // After one empty step, back off to a short timeout: if nothing
-          // rendered within a full wait, further waits at this scroll
-          // position essentially never help and would otherwise burn a
-          // full RENDER_WAIT_TIMEOUT_MS on every remaining step.
-          const timeout = consecutiveEmptySteps > 0 ? 300 : RENDER_WAIT_TIMEOUT_MS;
+          // After one empty step, back off: if nothing rendered within a full
+          // wait, further waits at this scroll position essentially never help
+          // and would otherwise burn a full RENDER_WAIT_TIMEOUT_MS on every
+          // remaining step.
+          //
+          // While the toolbar says pages are still missing, back off to a
+          // longer floor rather than the shortest one. 300ms is under the time
+          // a slow page needs to decode, and a page skipped here is lost for
+          // good once scrolling moves on and the viewer unmounts it. Do NOT
+          // disable the backoff entirely in that case: pages are "missing" for
+          // almost the whole document, so that turns every empty step into a
+          // 4s stall and makes long exports take minutes.
+          const emptyStepTimeout = pagesStillMissing() ? 1200 : 300;
+          const timeout = consecutiveEmptySteps > 0 ? emptyStepTimeout : RENDER_WAIT_TIMEOUT_MS;
           const capturedSomething = await waitFor(captureNewlyRenderedPages, timeout, RENDER_POLL_INTERVAL_MS);
           consecutiveEmptySteps = capturedSomething ? 0 : consecutiveEmptySteps + 1;
 
-          overlay.update(capturedElements.length, expectedPageCount);
-          reportProgress(capturedElements.length, expectedPageCount);
+          overlay.update(captured.size, expectedPageCount);
+          reportProgress(captured.size, expectedPageCount);
 
           const reachedBottom =
             scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 2;
@@ -203,6 +291,24 @@
         }
       }
 
+      // waitFor() resolves the moment ANY page is captured, and the loop above
+      // then breaks immediately on reaching the bottom — so pages that were
+      // still decoding at that instant were silently dropped, and the export
+      // finished "successfully" with fewer pages than the document has. Give
+      // the viewer a bounded chance to finish before assembling.
+      let quietSince = Date.now();
+      const settleDeadline = Date.now() + SETTLE_MAX_MS;
+      while (Date.now() < settleDeadline && !overlay.cancelled) {
+        await new Promise((r) => setTimeout(r, SETTLE_POLL_MS));
+        if (captureNewlyRenderedPages()) {
+          quietSince = Date.now();
+          overlay.update(captured.size, expectedPageCount);
+          reportProgress(captured.size, expectedPageCount);
+        } else if (!pagesStillMissing() && Date.now() - quietSince >= SETTLE_QUIET_MS) {
+          break; // nothing new for a while: the viewer has stopped producing pages
+        }
+      }
+
       if (overlay.cancelled) {
         overlay.setStatus("Cancelado");
         reportError("Exportación cancelada por el usuario");
@@ -210,7 +316,7 @@
         return;
       }
 
-      if (capturedElements.length === 0) {
+      if (captured.size === 0) {
         overlay.setStatus("No se detectaron páginas");
         reportError("No se detectaron páginas del documento");
         setTimeout(() => overlay.remove(), 2500);
@@ -222,33 +328,37 @@
       const { jsPDF } = window.jspdf;
       let doc = null;
 
-      for (let i = 0; i < capturedElements.length; i++) {
-        const el = capturedElements[i];
-        const { width, height } = naturalSize(el);
-        const orientation = width >= height ? "landscape" : "portrait";
-        const pdfWidth = width * PDF_UNIT_SCALE;
-        const pdfHeight = height * PDF_UNIT_SCALE;
-        const format = [pdfWidth, pdfHeight];
+      // Pages go into the PDF in document order, which is not the order they
+      // finished rendering in. Nothing here touches the DOM any more: every
+      // page was already encoded at capture time.
+      const capturedCount = captured.size;
+      const pages = Array.from(captured.values()).sort((a, b) => a.top - b.top);
+      captured.clear(); // `pages` owns the encoded bytes from here on
 
-        const pageCanvas = document.createElement("canvas");
-        pageCanvas.width = width;
-        pageCanvas.height = height;
-        const ctx = pageCanvas.getContext("2d");
-        try {
-          ctx.drawImage(el, 0, 0, width, height);
-        } catch {
-          throw new Error(`No se pudo leer la página ${i + 1}: el navegador bloqueó el acceso a la imagen.`);
+      for (let i = 0; i < pages.length; i++) {
+        if (overlay.cancelled) {
+          overlay.setStatus("Cancelado");
+          reportError("Exportación cancelada por el usuario");
+          setTimeout(() => overlay.remove(), 1200);
+          return;
         }
+
+        const page = pages[i];
+        const orientation = page.width >= page.height ? "landscape" : "portrait";
+        const pdfWidth = page.width * PDF_UNIT_SCALE;
+        const pdfHeight = page.height * PDF_UNIT_SCALE;
+        const format = [pdfWidth, pdfHeight];
 
         if (!doc) {
           doc = new jsPDF({ unit: "px", orientation, format });
         } else {
           doc.addPage(format, orientation);
         }
-        doc.addImage(pageCanvas, quality.pdfFormat, 0, 0, pdfWidth, pdfHeight, undefined, quality.compression);
+        doc.addImage(page.dataUrl, quality.pdfFormat, 0, 0, pdfWidth, pdfHeight);
 
-        pageCanvas.width = 0;
-        pageCanvas.height = 0; // release the backing pixel buffer right away
+        // jsPDF has its own copy now; drop ours so peak memory tracks the PDF
+        // rather than the PDF plus a second full set of page images.
+        pages[i] = null;
 
         if (i % 5 === 0) await new Promise((r) => requestAnimationFrame(r));
       }
@@ -264,13 +374,13 @@
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-      const incomplete = expectedPageCount != null && capturedElements.length < expectedPageCount;
+      const incomplete = expectedPageCount != null && capturedCount < expectedPageCount;
       overlay.setStatus(
         incomplete
-          ? `Descargado con ${capturedElements.length} de ${expectedPageCount} páginas (incompleto)`
-          : `Descargado: ${capturedElements.length} páginas`
+          ? `Descargado con ${capturedCount} de ${expectedPageCount} páginas (incompleto)`
+          : `Descargado: ${capturedCount} páginas`
       );
-      reportDone(capturedElements.length, expectedPageCount);
+      reportDone(capturedCount, expectedPageCount);
       setTimeout(() => overlay.remove(), 3000);
     } catch (err) {
       overlay.setStatus("Error: " + (err && err.message ? err.message : String(err)));
@@ -281,7 +391,21 @@
     }
   }
 
+  // Returns true only if THIS frame owns viewer content and has started an
+  // export. The popup injects into every frame and needs a way to tell "the
+  // sidebar iframe correctly did nothing" apart from "detection failed
+  // everywhere" — otherwise a DOM change on Google's side leaves the popup
+  // stuck at 0% forever with no error.
   window.__dpuStartCapture = function (payload) {
-    runCapture(payload);
+    const detector = window.__dpuPageDetector;
+    if (!detector) return false; // detector script failed to load in this frame
+    if (window.__dpuCaptureRunning) return false;
+
+    const initial = detector.detectPages();
+    if (initial.pageElements.length === 0) return false; // e.g. a sidebar iframe
+
+    window.__dpuCaptureRunning = true;
+    runCapture(payload, detector, initial);
+    return true;
   };
 })();

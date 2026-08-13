@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="../styles/tokens.css">
@@ -37,12 +37,15 @@
   </form>
 
   <div id="progressState" class="dpu-progress" hidden>
-    <div class="dpu-bar-track"><div id="progressFill" class="dpu-bar-fill"></div></div>
-    <p id="progressText" class="dpu-status"></p>
+    <div id="progressTrack" class="dpu-bar-track" role="progressbar"
+         aria-label="Progreso de la exportación" aria-valuemin="0" aria-valuemax="100">
+      <div id="progressFill" class="dpu-bar-fill"></div>
+    </div>
+    <p id="progressText" class="dpu-status" role="status" aria-live="polite"></p>
   </div>
 
   <div id="resultState" class="dpu-result" hidden>
-    <p id="resultText"></p>
+    <p id="resultText" role="status" aria-live="polite"></p>
   </div>
 
   <p class="dpu-footer">Todo el procesamiento ocurre en tu navegador. No se envía ningún dato.</p>

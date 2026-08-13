@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Documento de prueba - Google Drive</title>
+  <style>
+    html, body { margin: 0; height: 100%; font-family: sans-serif; }
+    #toolbar { height: 48px; background: #202124; color: #fff; display: flex;
+               align-items: center; padding: 0 16px; gap: 16px; }
+    #layout { display: flex; height: calc(100% - 48px); }
+    #viewer { flex: 1; overflow-y: auto; background: #525659; padding: 20px 0; }
+    .page-slot { width: 800px; height: 1035px; margin: 0 auto 20px; background: #3c4043; }
+    .page-slot img { display: block; width: 800px; height: 1035px; }
+    #sidebar { width: 260px; border: 0; }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <span id="pagelabel">1 / ?</span>
+    <span>documento-de-prueba.pdf</span>
+  </div>
+  <div id="layout">
+    <!-- Same auto-generated class fragment the real Drive viewer uses -->
+    <div id="viewer" class="ndfHFb-c4YZDc-cYSp0e-s2gQvd ndfHFb-c4YZDc-s2gQvd"></div>
+    <iframe id="sidebar" src="/__dpu_sidebar"></iframe>
+  </div>
+
+<script>
+const PARAMS = new URLSearchParams(location.search);
+const TOTAL = Number(PARAMS.get('pages')) || 12;
+// Lets a test advertise a page count that disagrees with reality.
+const LABEL_TOTAL = Number(PARAMS.get('label')) || TOTAL;
+const W = 800, H = 1035;
+const viewer = document.getElementById('viewer');
+const label = document.getElementById('pagelabel');
+label.setAttribute('aria-label', `Página 1 de ${LABEL_TOTAL}`);
+label.textContent = `1 / ${LABEL_TOTAL}`;
+const slots = [];
+
+// Every slot exists from the start so scrollHeight covers the whole document,
+// exactly like a virtualized list with a sizer. Only the bitmap is lazy.
+for (let i = 1; i <= TOTAL; i++) {
+  const slot = document.createElement('div');
+  slot.className = 'page-slot';
+  slot.dataset.page = String(i);
+  viewer.appendChild(slot);
+  slots.push(slot);
+}
+
+// Page i is a solid colour with R = i*8, so the exported PDF can be decoded
+// back to a page index by sampling a pixel. Step 8 keeps R inside 0-255 for
+// documents up to 31 pages; step 20 silently clamped past page 12.
+function makePageBlob(i) {
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = `rgb(${i * 8}, 60, 120)`;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 200px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(String(i), W / 2, H / 2);
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+
+const materialized = new Set();
+let renderedCount = 0;
+window.__fixtureRendered = 0; // defined up front: the jitter below delays the first page
+
+// A real viewer decodes pages in parallel, so they do NOT finish in document
+// order. The deterministic jitter below reproduces that: it is what exposes
+// capture code that pairs rendered pages to slots by index instead of by
+// identity (which duplicated pages and dropped others).
+const jitterFor = (i) => ((i * 7) % 5) * 120;
+
+async function materialize(slot) {
+  const i = Number(slot.dataset.page);
+  if (materialized.has(i)) return;
+  materialized.add(i);
+  await new Promise((r) => setTimeout(r, jitterFor(i)));
+  const blob = await makePageBlob(i);
+  const img = document.createElement('img');
+  img.width = W; img.height = H;
+  img.src = URL.createObjectURL(blob);
+  await img.decode();
+  slot.appendChild(img);
+  renderedCount++;
+  window.__fixtureRendered = renderedCount;
+}
+
+// ?evict=1 makes the viewer aggressively unmount pages that scrolled away and
+// revoke their blob: URLs — what a real virtualizer does on long documents.
+// Capture code that only stores DOM references produces blank pages here,
+// because by assembly time the element is detached and its source is gone.
+const EVICT = PARAMS.get('evict') === '1';
+window.__fixtureEvicted = 0;
+
+function evict(slot) {
+  const img = slot.querySelector('img');
+  if (!img) return;
+  URL.revokeObjectURL(img.src);
+  img.remove();
+  materialized.delete(Number(slot.dataset.page));
+  renderedCount--;
+  window.__fixtureRendered = renderedCount;
+  window.__fixtureEvicted++;
+}
+
+// Materialize whatever is within 1.5 viewports of the current scroll position.
+function sweep() {
+  const vh = viewer.clientHeight;
+  const top = viewer.scrollTop;
+  for (const slot of slots) {
+    const slotTop = slot.offsetTop - viewer.offsetTop;
+    const slotBottom = slotTop + H;
+    if (slotTop < top + vh * 1.5 && slotBottom > top - vh * 0.5) {
+      materialize(slot);
+    } else if (EVICT && (slotBottom < top - vh * 3 || slotTop > top + vh * 3)) {
+      // Real virtualizers keep a generous buffer before discarding. Evicting
+      // the page immediately behind the viewport would just race the exporter
+      // instead of modelling anything a real viewer does.
+      evict(slot);
+    }
+  }
+}
+viewer.addEventListener('scroll', sweep);
+sweep();
+window.__fixtureReady = true;
+</script>
+</body>
+</html>

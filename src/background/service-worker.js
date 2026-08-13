@@ -33,13 +33,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !message.type) return false;
 
   (async () => {
+    // A malformed message must not throw inside this IIFE: sendResponse would
+    // never run and the caller's port would hang until it times out.
+    const payload = message.payload || {};
+    const tabId = sender.tab ? sender.tab.id : undefined;
+
     switch (message.type) {
       case "DPU_EXPORT_PROGRESS": {
         const state = await setState({
           status: "running",
-          tabId: sender.tab ? sender.tab.id : undefined,
-          capturedPages: message.payload.capturedPages,
-          expectedPageCount: message.payload.expectedPageCount ?? null,
+          tabId,
+          capturedPages: payload.capturedPages,
+          expectedPageCount: payload.expectedPageCount ?? null,
         });
         await updateBadge(state);
         sendResponse({ ok: true });
@@ -48,17 +53,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case "DPU_EXPORT_DONE": {
         const state = await setState({
           status: "done",
-          capturedPages: message.payload.capturedPages,
-          expectedPageCount: message.payload.expectedPageCount ?? null,
+          tabId,
+          capturedPages: payload.capturedPages,
+          expectedPageCount: payload.expectedPageCount ?? null,
         });
         await updateBadge(state);
         sendResponse({ ok: true });
         break;
       }
       case "DPU_EXPORT_ERROR": {
+        // tabId matters here too: an export that fails before reporting any
+        // progress would otherwise show its error on every other tab's popup.
         const state = await setState({
           status: "error",
-          errorMessage: message.payload.errorMessage,
+          tabId,
+          errorMessage: payload.errorMessage,
         });
         await updateBadge(state);
         sendResponse({ ok: true });

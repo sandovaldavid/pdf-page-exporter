@@ -110,6 +110,12 @@ button#exportBtn:disabled {
   transition: width 0.15s ease;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .dpu-bar-fill {
+    transition: none;
+  }
+}
+
 .dpu-status {
   font-size: 12px;
   color: var(--ds-content-muted);
