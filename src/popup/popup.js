@@ -15,6 +15,7 @@ function cacheElements() {
   els.progressText = document.getElementById("progressText");
   els.resultState = document.getElementById("resultState");
   els.resultText = document.getElementById("resultText");
+  els.resetBtn = document.getElementById("resetBtn");
 }
 
 function isDriveUrl(url) {
@@ -113,6 +114,14 @@ async function savePreferences() {
   });
 }
 
+async function handleReset() {
+  // The stored state is what keeps the popup pinned to the old result when the
+  // same tab is reused for another document. Clear it before showing the form;
+  // a sleeping service worker must not block the user either.
+  await chrome.runtime.sendMessage({ type: "DPU_EXPORT_RESET" }).catch(() => null);
+  showState("form");
+}
+
 async function handleExportSubmit(event) {
   event.preventDefault();
   await savePreferences();
@@ -204,6 +213,7 @@ async function init() {
   // Attached before any await: if anything below throws, the form must not be
   // left rendered but inert with a dead Export button.
   els.exportForm.addEventListener("submit", handleExportSubmit);
+  els.resetBtn.addEventListener("click", handleReset);
 
   const prefs = await loadPreferences();
   els.qualitySelect.value = prefs.quality;

@@ -132,6 +132,22 @@ button#exportBtn:disabled {
   color: var(--ds-success-text);
 }
 
+.dpu-reset {
+  margin-top: var(--ds-space-3);
+  padding: 6px 10px;
+  border: 1px solid var(--ds-edge);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-surface);
+  color: var(--ds-content-strong);
+  font-family: var(--ds-font-heading);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dpu-reset:hover {
+  background: var(--ds-surface-highlight);
+}
+
 .dpu-result.dpu-result-error {
   background: color-mix(in srgb, var(--ds-error-500) 8%, transparent);
   border-color: color-mix(in srgb, var(--ds-error-500) 40%, transparent);
