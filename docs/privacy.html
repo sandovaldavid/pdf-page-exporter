@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de privacidad — PDF Page Exporter</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { max-width: 46rem; margin: 3rem auto; padding: 0 1.25rem;
+      font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    h1 { font-size: 1.75rem; line-height: 1.25; }
+    h2 { font-size: 1.15rem; margin-top: 2rem; }
+    code { font-size: .9em; }
+    .muted { opacity: .7; }
+  </style>
+</head>
+<body>
+  <h1>Política de privacidad — PDF Page Exporter</h1>
+  <p class="muted">Última actualización: 26 de octubre de 2026</p>
+
+  <p>PDF Page Exporter es una extensión de Chrome que genera un archivo PDF a
+  partir de las páginas que el visor de Google Drive/Docs ya tiene renderizadas
+  en la pestaña activa. Esta política describe qué datos maneja y cómo.</p>
+
+  <h2>Qué datos maneja la extensión</h2>
+  <ul>
+    <li><strong>Contenido de la página (imágenes de las páginas del documento).</strong>
+    Solo cuando pulsas «Exportar PDF», la extensión lee las imágenes que el visor
+    ya muestra en pantalla, las procesa en memoria y las ensambla en el PDF que
+    tú solicitaste. No se guardan en ningún servidor ni se transmiten fuera de tu
+    dispositivo.</li>
+    <li><strong>Preferencias.</strong> La calidad elegida y la opción de
+    recorrido automático se guardan localmente con
+    <code>chrome.storage.local</code>. Nunca salen de tu dispositivo.</li>
+    <li><strong>Progreso de la exportación.</strong> El estado de una exportación
+    en curso se guarda en <code>chrome.storage.session</code> para que la barra
+    de progreso se restaure si cierras y reabres el popup. Se borra al terminar
+    la sesión del navegador.</li>
+  </ul>
+
+  <h2>Qué NO hace</h2>
+  <ul>
+    <li>No envía datos a ningún servidor propio ni de terceros.</li>
+    <li>No incluye analítica, telemetría ni publicidad.</li>
+    <li>No vende, comparte ni transfiere datos a terceros.</li>
+    <li>No lee ni modifica otras pestañas, sitios o archivos.</li>
+    <li>No usa <code>chrome.storage.sync</code> ni cookies propias.</li>
+  </ul>
+
+  <h2>Permisos y para qué se usan</h2>
+  <ul>
+    <li><code>scripting</code>: insertar el código que lee las páginas ya
+    renderizadas y genera el PDF, únicamente después de pulsar el icono y
+    «Exportar PDF».</li>
+    <li><code>storage</code>: guardar tus preferencias y el progreso local de la
+    exportación, como se describe arriba.</li>
+    <li><code>https://drive.google.com/*</code> y
+    <code>https://docs.google.com/*</code>: acceder al visor de documentos en
+    esos dominios, que es donde funciona la extensión.</li>
+  </ul>
+
+  <h2>Uso limitado</h2>
+  <p>El contenido de la página se usa exclusivamente para la función principal
+  que solicitaste: generar el PDF descargable. No se usa para publicidad,
+  elaboración de perfiles, investigación de mercado ni ningún fin ajeno a esa
+  función. No se permite que personas lean tus datos, salvo que nos des tu
+  consentimiento para una incidencia concreta de soporte, que lo exija la ley o
+  que se trate de datos agregados y anonimizados.</p>
+
+  <h2>Conservación y eliminación</h2>
+  <p>Las imágenes de las páginas se mantienen en memoria solo durante la
+  exportación y se liberan al terminar. Las preferencias permanecen en el
+  almacenamiento local de la extensión hasta que las borres o desinstales la
+  extensión. El progreso de la sesión se elimina al cerrar el navegador.</p>
+
+  <h2>Contacto</h2>
+  <p>Dudas, incidencias o solicitudes relacionadas con esta política:
+  <a href="https://github.com/sandovaldavid/pdf-page-exporter/issues">github.com/sandovaldavid/pdf-page-exporter/issues</a>.</p>
+
+  <p class="muted">Esta política aplica únicamente a la extensión PDF Page
+  Exporter. No rige el contenido de los documentos que decidas exportar ni el
+  uso que hagas de ellos.</p>
+</body>
+</html>

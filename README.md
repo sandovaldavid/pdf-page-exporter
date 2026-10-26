@@ -12,12 +12,14 @@ las decisiones técnicas. Ver `CHROMEWEBSTORE.md` para la ficha de la tienda.
 
 ## Estado actual
 
-Implementación v0.1.0 verificada extremo a extremo contra 2 documentos PDF
-reales (3 y 12 páginas) en las 2 variantes del visor de Google
-(`docs.google.com/viewer` y `drive.google.com/file/d/…/view`), con la
-extensión real instalada y un clic real en "Exportar PDF". Ver
+Implementación v0.1.0 verificada extremo a extremo contra 4 documentos PDF
+reales (3, 7, 12 y 194 páginas) en las 2 variantes del visor de Google
+(`docs.google.com/viewer` y `drive.google.com/file/d/…/view`), incluyendo un
+documento apaisado y uno de 194 páginas, con la extensión real instalada y un
+clic real en "Exportar PDF". La suite E2E (`test/run.sh`) ejecuta 30
+comprobaciones de navegador y verifica los PDF con `pdfinfo`/`pdftoppm`. Ver
 `docs/selectors.md` para el detalle completo y lo que todavía falta probar
-(documento apaisado, documento que exija sesión iniciada, 100+ páginas).
+(documento que exija sesión iniciada, tamaños de página mixtos).
 
 ## Limitaciones conocidas
 
@@ -29,6 +31,9 @@ extensión real instalada y un clic real en "Exportar PDF". Ver
   ni otros visores.
 - Los selectores del DOM de Google pueden romperse sin aviso cuando Google
   actualice su visor — ver `docs/selectors.md`.
+- Los documentos largos tardan: la prueba de 194 páginas tomó ~8m19s en
+  calidad equilibrada, porque el visor se recorre y se codifica página por
+  página.
 
 ## Instalación en modo desarrollador
 
@@ -53,6 +58,13 @@ Usa esta extensión solo con documentos a los que tengas acceso legítimo,
 respetando los derechos de autor y las condiciones bajo las que recibiste
 el documento.
 
+## Privacidad
+
+La extensión procesa las imágenes de las páginas localmente y no las envía a
+ningún servidor: no hay analítica, telemetría ni `storage.sync`. La política
+completa está en `docs/privacy.html`; para la ficha de la tienda se publica en
+GitHub Pages (pendiente de habilitar, ver `CHROMEWEBSTORE.md`).
+
 ## Estructura del proyecto
 
 ```
@@ -75,6 +87,7 @@ scripts/
   generate-icons.sh         Rasteriza icons/icon.svg a los tres tamaños (requiere ImageMagick)
   package-extension.sh      Genera el ZIP de distribución/tienda
 docs/selectors.md           Estado de verificación de los selectores del visor
+docs/privacy.html           Política de privacidad para la ficha de la tienda
 ```
 
 ## Desarrollo
@@ -99,17 +112,23 @@ Empaquetar para distribución/tienda:
 
 Ya verificado (ver `docs/selectors.md` para el detalle): detección de
 páginas, orden, contenedor scrollable, auto-scroll con virtualización real,
-y exportación completa contra 2 documentos reales públicos. Lo que falta,
-antes de darla por completamente probada:
+y exportación completa contra 4 documentos reales públicos (3, 7, 12 y 194
+páginas), incluyendo un PDF apaisado. La suite E2E cubre 30 comprobaciones de
+navegador más la verificación externa de los PDF. Lo que falta, antes de
+darla por completamente probada:
 
 1. Un documento que exija sesión de Google iniciada (todo lo probado hasta
-   ahora fue con enlaces públicos/compartidos).
-2. Un documento apaisado o con tamaños de página mixtos real (la lógica de
-   orientación por página se probó exhaustivamente con datos sintéticos,
-   pero no contra un PDF apaisado real de Drive).
-3. Un documento largo (100+ páginas), para confirmar memoria y que la
-   virtualización no cambia de patrón a mayor escala.
-4. El caso de iframe genuino (visor incrustado en un origen de terceros).
+   ahora fue con enlaces públicos/compartidos). Bloqueado hasta disponer de
+   una URL y una sesión.
+2. Un documento real con tamaños de página mixtos (no se encontró un PDF
+   público mixto; el caso apaisado puro ya está verificado).
+3. Memoria pico y determinismo en documentos largos: la corrida de 194
+   páginas no crasheó y la pestaña siguió respondiendo, pero no se muestreó
+   el RSS durante toda la captura ni se repitió la corrida.
+4. Iframe de origen distinto: no soportado por diseño. El popup solo se
+   activa si la pestaña de nivel superior es `drive.google.com` o
+   `docs.google.com`; ampliar los permisos empeoraría la revisión de la
+   tienda.
 
 ## Diseño
 
@@ -135,3 +154,6 @@ sección 16 del design system) y reemplaza `icons/icon.svg`.
   License), variable, subset a caracteres latinos.
 - `assets/fonts/jetbrains-mono-variable-latin.woff2` — JetBrains Mono (SIL
   Open Font License), variable, subset a caracteres latinos.
+
+El texto completo de ambas licencias viaja con el paquete en
+`assets/fonts/OFL.txt`.

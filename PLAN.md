@@ -2,7 +2,7 @@
 
 > Proyecto: `DrivePDF-Unblocker`
 > Fecha: 2026-07-27
-> Estado: planificación (aún no existe código)
+> Estado: implementado (v0.1.0); este documento conserva el plan y la auditoría originales. Ver `README.md` y `docs/selectors.md` para el estado actual.
 > Fuentes consultadas: skill `chrome-extensions` (GoogleChrome/modern-web-guidance) y documentación oficial de jsPDF vía Context7 MCP (`/parallax/jspdf`).
 
 ---
