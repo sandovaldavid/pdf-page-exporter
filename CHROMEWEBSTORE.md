@@ -1,6 +1,6 @@
 # Chrome Web Store Listing: PDF Page Exporter
 
-> Last Updated: 2026-10-26
+> Last Updated: 2026-10-27
 > **Status: package validated; the store listing is not yet publishable.** The v0.1.0 ZIP
 > builds and validates (manifest, icons, paths and remote code checked), and
 > the required screenshot exists. Publisher, contact and visibility still need
@@ -168,7 +168,7 @@ https://github.com/sandovaldavid/pdf-page-exporter/issues
 
 https://github.com/sandovaldavid/pdf-page-exporter
 
-## Submission Readiness (2026-10-26)
+## Submission Readiness (2026-10-27)
 
 | Check | Status | Evidence |
 |---|---|---|
@@ -180,7 +180,7 @@ https://github.com/sandovaldavid/pdf-page-exporter
 | Permissions minimal | Passed | `scripting`, `storage`, two Google host permissions |
 | Store icon 128×128 | Passed | valid RGBA PNG |
 | At least one required screenshot | Passed | `store-assets/store-1.png`, 1280×800 |
-| Privacy policy URL live | **Not run** | `website/privacy.html` and `website/es/privacy.html` ready; `Deploy website` not run, so the live URL is not verified |
+| Privacy policy URL live | Passed | `https://sandovaldavid.github.io/pdf-page-exporter/privacy.html` and `/es/privacy.html` live (HTTP 200 via GitHub Pages) |
 | Publisher, contact, visibility | **Blocked** | decisions pending |
 | Real landscape document (7 pages) | Passed | 7/7 pages, 800×565 pt, all landscape, non-blank, unique |
 | Real 194-page document (RFC 9110) | Passed | 194/194 pages, 800×1131 pt, portrait, non-blank, unique; 8m19s |
@@ -193,7 +193,7 @@ https://github.com/sandovaldavid/pdf-page-exporter
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 0.1.0 | 2026-10-26 | Initial version: PDF export with automatic scrolling, per-sheet page size, editable file name, quality selector and cancelable progress bar. Verified against 4 real public documents (3, 7, 12 and 194 pages), including landscape and 194 pages. Added an "Exportar otro PDF" ("Export another PDF") button to reset the popup after an export. See Known Issues for what still needs coverage before publishing. | Draft |
+| 0.1.0 | 2026-10-27 | Initial release: PDF export with automatic scrolling, per-sheet page size, editable file name, quality selector and cancelable progress bar. Verified against 4 real public documents (3, 7, 12 and 194 pages), including landscape and 194 pages. Added an "Exportar otro PDF" ("Export another PDF") button to reset the popup after an export. Official v0.1.0 published on GitHub Releases. | Released |
 
 ## Review Notes
 
