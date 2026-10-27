@@ -1,173 +1,183 @@
 # PDF Page Exporter
 
-Extensión de Chrome (Manifest V3) que exporta a un PDF descargable las páginas
-de un documento que el visor de Google Drive/Docs **ya renderizó en
-pantalla**. No descifra nada ni elude ninguna protección: solo lee píxeles
-que el navegador ya te está mostrando, igual que una captura de pantalla,
-recorriendo el documento automáticamente y ensamblando cada página en su
-tamaño y orientación reales.
+Chrome extension (Manifest V3) that exports the pages of a document that the
+Google Drive/Docs viewer **has already rendered on screen** as a downloadable
+PDF. It does not decrypt anything or bypass any protection: it only reads
+pixels the browser is already showing you, like a screenshot, walking through
+the document automatically and assembling each page at its real size and
+orientation.
 
-Ver `PLAN.md` para el diseño completo, la auditoría del prototipo original y
-las decisiones técnicas. Ver `CHROMEWEBSTORE.md` para la ficha de la tienda.
+See `PLAN.md` for the full design, the audit of the original prototype and the
+technical decisions. See `CHROMEWEBSTORE.md` for the store listing.
 
-## Estado actual
+## Current status
 
-Implementación v0.1.0 verificada extremo a extremo contra 4 documentos PDF
-reales (3, 7, 12 y 194 páginas) en las 2 variantes del visor de Google
-(`docs.google.com/viewer` y `drive.google.com/file/d/…/view`), incluyendo un
-documento apaisado y uno de 194 páginas, con la extensión real instalada y un
-clic real en "Exportar PDF". La suite E2E (`test/run.sh`) ejecuta 30
-comprobaciones de navegador y verifica los PDF con `pdfinfo`/`pdftoppm`. Ver
-`docs/selectors.md` para el detalle completo y lo que todavía falta probar
-(documento que exija sesión iniciada, tamaños de página mixtos).
+v0.1.0 implementation verified end to end against 4 real PDF documents (3, 7,
+12 and 194 pages) in the 2 variants of the Google viewer
+(`docs.google.com/viewer` and `drive.google.com/file/d/…/view`), including a
+landscape document and a 194-page one, with the real extension installed and a
+real click on "Exportar PDF" ("Export PDF"). The E2E suite (`test/run.sh`) runs
+30 browser checks and verifies the PDFs with `pdfinfo`/`pdftoppm`. See
+`docs/selectors.md` for the full detail and what still needs testing (a
+document that requires a signed-in session, mixed page sizes).
 
-## Limitaciones conocidas
+## Known limitations
 
-- La salida es **ráster** (imágenes), no texto: el PDF no permite buscar,
-  seleccionar ni copiar texto, y no es accesible para lectores de pantalla.
-- La nitidez depende del nivel de zoom del visor al momento de exportar —
-  sube el zoom antes de exportar si quieres más resolución.
-- Solo cubre el visor de PDF de Drive/Docs, no Google Docs/Sheets nativos
-  ni otros visores.
-- Los selectores del DOM de Google pueden romperse sin aviso cuando Google
-  actualice su visor — ver `docs/selectors.md`.
-- Los documentos largos tardan: la prueba de 194 páginas tomó ~8m19s en
-  calidad equilibrada, porque el visor se recorre y se codifica página por
-  página.
+- The output is **raster** (images), not text: the PDF does not allow
+  searching, selecting or copying text, and it is not accessible to screen
+  readers.
+- Sharpness depends on the viewer zoom level at the time of export. Increase
+  the zoom before exporting if you want more resolution.
+- It only covers the Drive/Docs PDF viewer, not native Google Docs/Sheets or
+  other viewers.
+- Google's DOM selectors can break without warning when Google updates its
+  viewer. See `docs/selectors.md`.
+- Long documents take time: the 194-page test took ~8m19s at balanced
+  quality, because the viewer is scrolled and each page is encoded one by one.
 
-## Instalación en modo desarrollador
+## Install in developer mode
 
-1. Clona este repositorio.
-2. Abre `chrome://extensions/` en Chrome.
-3. Activa "Modo de desarrollador" (esquina superior derecha).
-4. Haz clic en "Cargar descomprimida" y selecciona la carpeta del repositorio
-   (la que contiene `manifest.json`).
-5. El icono de la extensión aparecerá en la barra de extensiones.
+1. Clone this repository.
+2. Open `chrome://extensions/` in Chrome.
+3. Turn on "Modo de desarrollador" (Developer mode) in the top right.
+4. Click "Cargar descomprimida" (Load unpacked) and select the repository
+   folder (the one that contains `manifest.json`).
+5. The extension icon will appear in the extensions bar.
 
-## Uso
+## Usage
 
-1. Abre un documento en el visor de Drive y espera a que cargue la primera
-   página.
-2. Haz clic en el icono de la extensión.
-3. Ajusta el nombre del archivo, la calidad, y si quieres recorrido
-   automático.
-4. Pulsa "Exportar PDF" y espera a que termine.
-5. El PDF se descarga a tu carpeta de descargas habitual.
+1. Open a document in the Drive viewer and wait for the first page to load.
+2. Click the extension icon.
+3. Adjust the file name and quality, and choose whether you want automatic
+   scrolling.
+4. Click "Exportar PDF" ("Export PDF") and wait for it to finish.
+5. The PDF downloads to your usual downloads folder.
 
-Usa esta extensión solo con documentos a los que tengas acceso legítimo,
-respetando los derechos de autor y las condiciones bajo las que recibiste
-el documento.
+Use this extension only with documents you have legitimate access to,
+respecting copyright and the terms under which you received the document.
 
-## Privacidad
+## Privacy
 
-La extensión procesa las imágenes de las páginas localmente y no las envía a
-ningún servidor: no hay analítica, telemetría ni `storage.sync`. La política
-completa está en `website/privacy.html`, con una versión en español en
-`website/es/privacy.html`. El sitio bilingüe vive en `website/` y se publica
-con el flujo `Deploy website` de GitHub Actions, que requiere que el origen de
-GitHub Pages esté configurado como GitHub Actions. Cuando ese flujo se ejecute,
-el sitio quedará en https://sandovaldavid.github.io/pdf-page-exporter/ (inglés)
-y https://sandovaldavid.github.io/pdf-page-exporter/es/ (español), y las
-políticas en https://sandovaldavid.github.io/pdf-page-exporter/privacy.html y
-https://sandovaldavid.github.io/pdf-page-exporter/es/privacy.html. Mientras el
-origen siga apuntando a `docs/`, esas URLs muestran la versión anterior.
+The extension processes page images locally and does not send them to any
+server: there is no analytics, telemetry or `storage.sync`. The full policy is
+in `website/privacy.html`, with a Spanish version in
+`website/es/privacy.html`. The bilingual site lives in `website/` and is
+published by the `Deploy website` GitHub Actions workflow. The GitHub Pages
+source is now set to GitHub Actions. Once that workflow runs on `main`, the site
+will be at https://sandovaldavid.github.io/pdf-page-exporter/ (English) and
+https://sandovaldavid.github.io/pdf-page-exporter/es/ (Spanish), and the
+policies at https://sandovaldavid.github.io/pdf-page-exporter/privacy.html and
+https://sandovaldavid.github.io/pdf-page-exporter/es/privacy.html. The workflow
+has not run on `main` yet, so those URLs still show the previous version.
 
-## Estructura del proyecto
+## Project structure
 
 ```
 manifest.json              Manifest V3
-src/popup/                 UI del popup (formulario, progreso, resultado)
+src/popup/                 Popup UI (form, progress, result)
 src/content/
-  page-detector.js         Cascada de selectores del visor (único lugar que los conoce)
-  capture.js                Auto-scroll, captura por página y ensamblado del PDF
+  page-detector.js         Viewer selector cascade (the only place that knows them)
+  capture.js               Auto-scroll, per-page capture and PDF assembly
 src/background/
-  service-worker.js         Relay de progreso + estado persistido en storage.session
+  service-worker.js        Progress relay + state persisted in storage.session
 src/vendor/
-  jspdf.umd.min.js          jsPDF 4.2.1, empaquetado (nunca cargado desde CDN)
+  jspdf.umd.min.js         jsPDF 4.2.1, bundled (never loaded from a CDN)
 src/styles/
-  tokens.css                Design tokens de la Identity System de David Sandoval (docs/design-system.md)
+  tokens.css               Design tokens from David Sandoval's Identity System (docs/design-system.md)
 assets/fonts/
-  inter-variable-latin.woff2          Fuente variable, empaquetada (nunca cargada desde CDN)
-  jetbrains-mono-variable-latin.woff2 Fuente variable, empaquetada (nunca cargada desde CDN)
-icons/                      icon.svg (fuente) + PNG generados en 16/48/128px
+  inter-variable-latin.woff2          Variable font, bundled (never loaded from a CDN)
+  jetbrains-mono-variable-latin.woff2 Variable font, bundled (never loaded from a CDN)
+icons/                     icon.svg (source) + generated PNGs at 16/48/128px
 scripts/
-  generate-icons.sh         Rasteriza icons/icon.svg a los tres tamaños (requiere ImageMagick)
-  package-extension.sh      Genera el ZIP de distribución/tienda
-website/                    Sitio público bilingüe (inglés en /, español en /es/)
-  index.html                Portada en inglés
-  privacy.html              Política de privacidad en inglés
-  es/                       Portada y política en español
-  site.css                  Estilos compartidos por ambos idiomas
-  assets/                   Icono y fuentes web del sitio
-.github/workflows/pages.yml Publica únicamente website/ en GitHub Pages
-docs/selectors.md           Estado de verificación de los selectores del visor
-docs/design-system.md       Fuente de verdad de la identidad visual
+  generate-icons.sh        Rasterizes icons/icon.svg to the three sizes (requires ImageMagick)
+  package-extension.sh     Builds the distribution/store ZIP
+website/                   Public bilingual site (English at /, Spanish at /es/)
+  index.html               English home page
+  privacy.html             English privacy policy
+  es/                      Spanish home page and policy
+  site.css                 Styles shared by both languages
+  assets/                  Site icon and web fonts
+.github/workflows/pages.yml Publishes only website/ to GitHub Pages
+.github/workflows/website-checks.yml Checks website/ on pull requests and uploads a preview
+.github/scripts/check-website.py Link, fragment, language and no-script checks used by that workflow
+docs/selectors.md          Verification status of the viewer selectors
+docs/design-system.md      Source of truth for the visual identity
 ```
 
-## Desarrollo
+## Development
 
-Regenerar iconos tras editar `icons/icon.svg`:
+Regenerate icons after editing `icons/icon.svg`:
 
 ```bash
 ./scripts/generate-icons.sh
 ```
 
-Actualizar jsPDF: descargar el tarball de npm (`registry.npmjs.org/jspdf`),
-verificar su `shasum` contra el que publica el registro, y copiar
-`dist/jspdf.umd.min.js` a `src/vendor/`.
+Update jsPDF: download the npm tarball (`registry.npmjs.org/jspdf`), verify
+its `shasum` against the one published by the registry, and copy
+`dist/jspdf.umd.min.js` to `src/vendor/`.
 
-Empaquetar para distribución/tienda:
+Package for distribution/store:
 
 ```bash
 ./scripts/package-extension.sh
 ```
 
-## Pruebas
+Check the website before touching `website/`:
 
-Ya verificado (ver `docs/selectors.md` para el detalle): detección de
-páginas, orden, contenedor scrollable, auto-scroll con virtualización real,
-y exportación completa contra 4 documentos reales públicos (3, 7, 12 y 194
-páginas), incluyendo un PDF apaisado. La suite E2E cubre 30 comprobaciones de
-navegador más la verificación externa de los PDF. Lo que falta, antes de
-darla por completamente probada:
+```bash
+python3 .github/scripts/check-website.py
+```
 
-1. Un documento que exija sesión de Google iniciada (todo lo probado hasta
-   ahora fue con enlaces públicos/compartidos). Bloqueado hasta disponer de
-   una URL y una sesión.
-2. Un documento real con tamaños de página mixtos (no se encontró un PDF
-   público mixto; el caso apaisado puro ya está verificado).
-3. Memoria pico y determinismo en documentos largos: la corrida de 194
-   páginas no crasheó y la pestaña siguió respondiendo, pero no se muestreó
-   el RSS durante toda la captura ni se repitió la corrida.
-4. Iframe de origen distinto: no soportado por diseño. El popup solo se
-   activa si la pestaña de nivel superior es `drive.google.com` o
-   `docs.google.com`; ampliar los permisos empeoraría la revisión de la
-   tienda.
+It validates that every local link and fragment resolves, that each page
+declares a language and a title, and that no page loads JavaScript. Pull
+requests that touch `website/` run the same check and attach the site as a
+`website-preview` artifact, which is the reviewable preview. There is no
+per-branch Pages URL: the `github-pages` environment only allows `main`, and
+deploying a branch would replace the live site.
 
-## Diseño
+## Tests
 
-Los estilos del popup y del overlay de progreso siguen la Identity System
-personal de David Sandoval — ver `docs/design-system.md` para la fuente de
-verdad (colores, tipografía, espaciado). `src/styles/tokens.css` es la
-implementación en CSS; ningún componente debe usar colores hardcodeados
-fuera de ese archivo.
+Already verified (see `docs/selectors.md` for details): page detection, order,
+scrollable container, auto-scroll with real virtualization, and full export
+against 4 real public documents (3, 7, 12 and 194 pages), including a
+landscape PDF. The E2E suite covers 30 browser checks plus external
+verification of the PDFs. What is missing before calling it fully tested:
 
-El icono actual es un glifo genérico (documento + flecha de descarga)
-recoloreado al azul de marca (`#0A5CD6`), **no** el isotype/slash oficial de
-la Identity System: ese logo no está embebido en `design-system.md` (solo
-tokens y referencias a nodos de Figma) y recrearlo a mano sin el archivo
-fuente arriesga una versión no aprobada de la marca personal. Para usar el
-isotype real, exporta los assets aprobados desde Figma (`Logo / Favicon`,
-sección 16 del design system) y reemplaza `icons/icon.svg`.
+1. A document that requires a signed-in Google session (everything tested so
+   far used public/shared links). Blocked until a URL and a session are
+   available.
+2. A real document with mixed page sizes (no public mixed PDF was found; the
+   pure landscape case is already verified).
+3. Peak memory and determinism on long documents: the 194-page run did not
+   crash and the tab stayed responsive, but RSS was not sampled throughout the
+   capture and the run was not repeated.
+4. Cross-origin iframe: not supported by design. The popup only activates if
+   the top-level tab is `drive.google.com` or `docs.google.com`; widening the
+   permissions would make store review worse.
 
-## Licencia de terceros
+## Design
 
-- `src/vendor/jspdf.umd.min.js` — jsPDF 4.2.1 (MIT), sin modificar. El
-  encabezado de licencia original se conserva en el propio archivo.
-- `assets/fonts/inter-variable-latin.woff2` — Inter (SIL Open Font
-  License), variable, subset a caracteres latinos.
-- `assets/fonts/jetbrains-mono-variable-latin.woff2` — JetBrains Mono (SIL
-  Open Font License), variable, subset a caracteres latinos.
+The popup and progress overlay styles follow David Sandoval's personal
+Identity System. See `docs/design-system.md` for the source of truth (colors,
+typography, spacing). `src/styles/tokens.css` is the CSS implementation; no
+component should use hardcoded colors outside that file.
 
-El texto completo de ambas licencias viaja con el paquete en
+The current icon is a generic glyph (document + download arrow) recolored to
+the brand blue (`#0A5CD6`), **not** the official isotype/slash from the
+Identity System: that logo is not embedded in `design-system.md` (only tokens
+and references to Figma nodes), and recreating it by hand without the source
+file risks an unapproved version of the personal brand. To use the real
+isotype, export the approved assets from Figma (`Logo / Favicon`, section 16
+of the design system) and replace `icons/icon.svg`.
+
+## Third-party licenses
+
+- `src/vendor/jspdf.umd.min.js` is jsPDF 4.2.1 (MIT), unmodified. The
+  original license header is kept in the file itself.
+- `assets/fonts/inter-variable-latin.woff2` is Inter (SIL Open Font License),
+  variable, subset to Latin characters.
+- `assets/fonts/jetbrains-mono-variable-latin.woff2` is JetBrains Mono (SIL
+  Open Font License), variable, subset to Latin characters.
+
+The full text of both licenses ships with the package in
 `assets/fonts/OFL.txt`.

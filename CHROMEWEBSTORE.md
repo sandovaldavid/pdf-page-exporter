@@ -1,51 +1,58 @@
-# Chrome Web Store Listing — PDF Page Exporter
+# Chrome Web Store Listing: PDF Page Exporter
 
 > Last Updated: 2026-10-26
-> **Estado: paquete validado; ficha aún no publicable.** El ZIP de v0.1.0 se genera
-> y valida (manifest, iconos, rutas y código remoto comprobados), y ya existe la
-> captura obligatoria. Faltan confirmar publisher, contacto y visibilidad. La
-> verificación con sesión de Google iniciada sigue pendiente; ver "Submission
-> Readiness" al final.
+> **Status: package validated; the store listing is not yet publishable.** The v0.1.0 ZIP
+> builds and validates (manifest, icons, paths and remote code checked), and
+> the required screenshot exists. Publisher, contact and visibility still need
+> confirmation. Verification with a signed-in Google session is still pending;
+> see "Submission Readiness" at the end.
 
 ## Store Listing
+
+> ⚠️ **The copy below is an English translation draft.** The store's primary
+> language is still Spanish (Latin America) and `description` in `manifest.json`
+> is still Spanish. Do not submit the English short description while those stay
+> Spanish: the field must match the manifest. Either switch the listing and the
+> manifest to English together, or use the Spanish copy from the previous
+> revision.
 
 **Extension Name** [REQUIRED]
 
 PDF Page Exporter
 
-> ⚠️ Debe coincidir exactamente con `name` en `manifest.json`. Deliberadamente **no** contiene "Google", "Drive" ni "Unblocker": usar marcas ajenas en el nombre es motivo de rechazo, y una palabra como "Unblocker" sugiere elusión de protecciones. Máx. 75 caracteres.
+> ⚠️ Must match `name` in `manifest.json` exactly. It deliberately does **not** contain "Google", "Drive" or "Unblocker": using other companies' trademarks in the name is grounds for rejection, and a word like "Unblocker" suggests bypassing protections. Max. 75 characters.
 
 **Short Description** [REQUIRED]
 
-Exporta a PDF las páginas de un documento que ya se muestran en el visor de tu navegador.
+Export to PDF the pages of a document that your browser viewer already displays.
 
-> 89 caracteres. Debe coincidir con `description` en el manifest (límite 132).
+> The Spanish version of this field is 89 characters; that string must match `description` in the manifest (limit 132).
 
 **Detailed Description** [REQUIRED]
 
-> Borrador. Redactado desde la perspectiva del usuario, sin mencionar librerías, APIs ni detalles de implementación.
+> Draft. Written from the user's perspective, without mentioning libraries, APIs or implementation details.
 
 ```
-Convierte en un PDF descargable las páginas de un documento que tu navegador ya está mostrando en pantalla.
+Turn the pages of a document that your browser is already showing on screen into a downloadable PDF.
 
-Genera un único archivo PDF a partir de las páginas visibles del documento. Recorre el documento automáticamente para que no tengas que desplazarte página por página. Conserva el tamaño y la orientación originales de cada página, incluso si el documento mezcla hojas verticales y horizontales. Puedes elegir el nombre del archivo antes de guardarlo y ajustar la calidad para equilibrar nitidez y tamaño. Una barra de progreso te indica en qué página va, y puedes cancelar en cualquier momento.
+Build a single PDF file from the visible pages of the document. It scrolls through the document automatically so you do not have to scroll page by page. It keeps the original size and orientation of each page, even when the document mixes portrait and landscape sheets. You can choose the file name before saving and adjust the quality to balance sharpness and size. A progress bar shows which page it is on, and you can cancel at any time.
 
-Cómo se usa:
-1. Abre el documento en tu navegador y espera a que cargue la primera página.
-2. Haz clic en el icono de la extensión.
-3. Escribe el nombre del archivo y elige la calidad.
-4. Pulsa Exportar y espera a que termine el recorrido.
-5. El PDF se guarda en tu carpeta de descargas.
+How to use it:
+1. Open the document in your browser and wait for the first page to load.
+2. Click the extension icon.
+3. Enter the file name and choose the quality.
+4. Click "Exportar PDF" (Export PDF) and wait for it to finish.
+5. The PDF is saved to your downloads folder.
 
-Consejo: aumenta el nivel de zoom del visor antes de exportar si quieres un resultado más nítido.
+Tip: increase the viewer zoom level before exporting if you want a sharper result.
 
-Privacidad: la extensión procesa localmente las páginas visibles de tu documento y guarda el PDF en tu equipo. No envía el contenido a ningún servidor, no lo almacena fuera de tu dispositivo, no incluye analítica ni telemetría y no necesita conexión a internet para hacer su trabajo. Solo actúa cuando pulsas su icono y «Exportar PDF».
+Privacy: the extension processes the visible pages of your document locally and saves the PDF to your device. It does not send the content to any server, does not store it outside your device, includes no analytics or telemetry, and does not need an internet connection to do its job. It only acts when you click its icon and "Exportar PDF" (Export PDF).
 
-Ten en cuenta: el PDF resultante contiene imágenes de las páginas, por lo que no permite buscar ni seleccionar texto. La nitidez depende de cómo se vea el documento en pantalla al exportarlo.
+Keep in mind: the resulting PDF contains images of the pages, so it does not allow searching or selecting text. Sharpness depends on how the document looks on screen when you export it.
 
-Usa esta extensión únicamente con documentos a los que tengas acceso legítimo y respetando los derechos de autor y las condiciones bajo las que recibiste el documento.
+Use this extension only with documents you have legitimate access to, respecting copyright and the terms under which you received the document.
 
-Dudas o problemas: https://github.com/sandovaldavid/pdf-page-exporter/issues
+Questions or problems: https://github.com/sandovaldavid/pdf-page-exporter/issues
 ```
 
 **Category** [REQUIRED]
@@ -54,11 +61,11 @@ Productivity
 
 **Single Purpose** [REQUIRED]
 
-Exporta a un único archivo PDF las páginas de un documento que el visor del navegador ya tiene renderizadas en pantalla.
+Export the pages of a document that the browser viewer has already rendered on screen to a single PDF file.
 
 **Primary Language** [REQUIRED]
 
-Spanish (Latin America) — ⚠️ confirmar; valorar publicar también en inglés.
+Spanish (Latin America). ⚠️ Confirm; consider publishing in English as well.
 
 ## Graphics & Assets
 
@@ -73,48 +80,48 @@ Spanish (Latin America) — ⚠️ confirmar; valorar publicar también en ingl�
 
 ### Screenshot Notes
 
-Todas las capturas deben usar un **documento de prueba propio y sin datos personales**, nunca material ajeno ni con marca de terceros visible.
+All screenshots must use **our own test document with no personal data**, never someone else's material and never material with a visible third-party trademark.
 
-1. ✅ `store-assets/store-1.png` (1280×800): popup real sobre un documento de ejemplo propio, con nombre de archivo y selector de calidad a la vista. El documento de fondo es genérico, sin datos personales ni marcas de terceros.
-2. ⬜ El overlay de progreso a mitad de exportación, mostrando "página 14 de 30".
-3. ⬜ El PDF resultante ya abierto, con el panel de miniaturas visible para evidenciar que conserva todas las páginas y sus orientaciones.
+1. ✅ `store-assets/store-1.png` (1280×800): real popup over our own sample document, with the file name and quality selector visible. The document in the background is generic, with no personal data and no third-party trademarks.
+2. ⬜ The progress overlay halfway through an export, showing "página 14 de 30" (page 14 of 30).
+3. ⬜ The resulting PDF already open, with the thumbnail panel visible to show that it keeps all pages and their orientations.
 
-`store-assets/` está en `.gitignore`; la captura es un asset de envío, no parte del código.
+`store-assets/` is in `.gitignore`; the screenshot is a submission asset, not part of the code.
 
 ## Permissions Justification
 
-> ⚠️ Confirmar contra el manifest final. Cada entrada se copia tal cual en el formulario del Developer Dashboard.
+> ⚠️ Confirm against the final manifest. Each entry is copied as is into the Developer Dashboard form.
 
 | Permission | Type | Justification |
 |------------|------|---------------|
-| `scripting` | permissions | Necesario para insertar, únicamente al pulsar el usuario el icono de la extensión, el código que lee las páginas ya renderizadas en la pestaña y las ensambla en un PDF. Sin este permiso la extensión no puede acceder al contenido visible que debe exportar. |
-| `storage` | permissions | Guarda localmente las preferencias del usuario (nombre de archivo sugerido, nivel de calidad) y el progreso de la exportación en curso, para que la barra de progreso se restaure si el usuario cierra y reabre el popup. Ningún dato sale del dispositivo. |
-| `https://drive.google.com/*` | host_permissions | El visor de documentos sobre el que opera la extensión se sirve en este dominio. El acceso se limita a leer las imágenes de las páginas ya mostradas en pantalla, solo tras un clic del usuario. |
-| `https://docs.google.com/*` | host_permissions | Algunas vistas del mismo visor se cargan desde este dominio en un marco secundario. Sin él, la exportación falla en esos documentos. |
+| `scripting` | permissions | Needed to inject the code that reads the pages already rendered in the tab and assembles them into a PDF. The code is injected only when the user clicks the extension icon. Without this permission the extension cannot access the visible content it must export. |
+| `storage` | permissions | Stores the user's preferences locally (suggested file name, quality level) and the progress of the current export, so the progress bar is restored if the user closes and reopens the popup. No data leaves the device. |
+| `https://drive.google.com/*` | host_permissions | The document viewer the extension operates on is served from this domain. Access is limited to reading the images of pages already shown on screen, only after a user click. |
+| `https://docs.google.com/*` | host_permissions | Some views of the same viewer load from this domain in a secondary frame. Without it, export fails on those documents. |
 
-Nota para la revisión: **no** se solicita `tabs`, `downloads`, `<all_urls>` ni ningún permiso de red. Ver `PLAN.md` §5 (D2, D7).
+Reviewer note: **no** `tabs`, `downloads`, `<all_urls>` or any network permission is requested. See `PLAN.md` §5 (D2, D7).
 
 ## Privacy & Data Use
 
 ### Data Collection
 
-**Does the extension collect user data?** **Sí — únicamente contenido web (imágenes de las páginas), procesado localmente y nunca transmitido.**
+**Does the extension collect user data?** **Yes, only website content (page images), processed locally and never transmitted.**
 
-La FAQ de User Data de Chrome Web Store considera manejo de datos el hecho de capturar o recortar contenido de una web, aunque ocurra en el dispositivo. Por eso la declaración correcta es "Sí, website content", con el alcance local indicado. El código de la extensión no realiza peticiones de red: no hay servidor propio, analítica, telemetría ni `chrome.storage.sync` (solo `local` y `session`, que no salen del dispositivo). Las imágenes se procesan en memoria dentro de la pestaña y el PDF se guarda directamente en el disco del usuario.
+The Chrome Web Store User Data FAQ treats capturing or cropping content from a website as data handling, even when it happens on the device. So the correct declaration is "Yes, website content", with the local scope noted. The extension code makes no network requests: there is no server of our own, no analytics, no telemetry and no `chrome.storage.sync` (only `local` and `session`, which do not leave the device). Images are processed in memory inside the tab and the PDF is saved directly to the user's disk.
 
 | Data Type | Collected? | Transmitted Off-Device? | Purpose | Shared with Third Parties? |
 |-----------|-----------|------------------------|---------|---------------------------|
-| Personally identifiable info | No | No | — | No |
-| Health info | No | No | — | No |
-| Financial info | No | No | — | No |
-| Authentication info | No | No | — | No |
-| Personal communications | No | No | — | No |
-| Location | No | No | — | No |
-| Web history | No | No | — | No |
-| User activity | No | No | — | No |
-| Website content | Sí — se lee en memoria solo al pulsar Exportar | No | Ensamblar el PDF que el usuario solicita | No |
+| Personally identifiable info | No | No | None | No |
+| Health info | No | No | None | No |
+| Financial info | No | No | None | No |
+| Authentication info | No | No | None | No |
+| Personal communications | No | No | None | No |
+| Location | No | No | None | No |
+| Web history | No | No | None | No |
+| User activity | No | No | None | No |
+| Website content | Yes, read into memory only when you click Export | No | Assemble the PDF the user requested | No |
 
-> La fila "Website content" es la que debe coincidir con el formulario: la extensión **sí lee** las imágenes de las páginas, pero no las almacena ni las transmite. Declarar "No" contradiría el comportamiento del código; declarar "Sí, procesado localmente" es exacto y coherente con la política de privacidad.
+> The "Website content" row is the one that must match the form: the extension **does read** page images, but it does not store or transmit them. Declaring "No" would contradict the code's behavior; declaring "Yes, processed locally" is accurate and consistent with the privacy policy.
 
 ### Data Use Certification
 
@@ -128,15 +135,15 @@ La FAQ de User Data de Chrome Web Store considera manejo de datos el hecho de ca
 
 `https://sandovaldavid.github.io/pdf-page-exporter/privacy.html`
 
-La política estará disponible en inglés en esa URL y en español en
-`https://sandovaldavid.github.io/pdf-page-exporter/es/privacy.html` cuando se
-ejecute el flujo `Deploy website`. El texto vive en `website/privacy.html` y
-`website/es/privacy.html`; el flujo `Deploy website` de GitHub Actions publica
-únicamente `website/`. La URL no depende de `/docs`.
+The policy will be available in English at that URL and in Spanish at
+`https://sandovaldavid.github.io/pdf-page-exporter/es/privacy.html` when the
+`Deploy website` workflow runs. The text lives in `website/privacy.html` and
+`website/es/privacy.html`; the `Deploy website` GitHub Actions workflow
+publishes only `website/`. The URL does not depend on `/docs`.
 
 ## Distribution
 
-**Visibility**: ⚠️ **Decisión pendiente — leer `PLAN.md` §7.** Recomendación: instalación local sin empaquetar como vía principal; si se publica, empezar en **Unlisted**.
+**Visibility**: ⚠️ **Pending decision, see `PLAN.md` §7.** Recommendation: local unpacked install as the main path; if published, start as **Unlisted**.
 
 **Regions**: All regions
 
@@ -144,11 +151,11 @@ ejecute el flujo `Deploy website`. El texto vive en `website/privacy.html` y
 
 **Publisher Name** [REQUIRED]
 
-⚠️ Pendiente.
+⚠️ Pending.
 
 **Contact Email** [REQUIRED]
 
-sandovaldavid.eng@gmail.com — ⚠️ confirmar; este correo aparece **públicamente** en la ficha. Valorar una dirección dedicada.
+sandovaldavid.eng@gmail.com. ⚠️ Confirm; this email appears **publicly** in the store listing. Consider a dedicated address.
 
 **Support URL / Email** [RECOMMENDED]
 
@@ -183,22 +190,22 @@ https://github.com/sandovaldavid/pdf-page-exporter
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 0.1.0 | 2026-10-26 | Versión inicial: exportación a PDF con recorrido automático, tamaño de página por hoja, nombre de archivo editable, selector de calidad y barra de progreso cancelable. Verificada contra 4 documentos públicos reales (3, 7, 12 y 194 páginas), incluyendo apaisado y 194 páginas. Añadido botón "Exportar otro PDF" para reiniciar el popup tras una exportación. Ver Known Issues para lo que falta cubrir antes de publicar. | Draft |
+| 0.1.0 | 2026-10-26 | Initial version: PDF export with automatic scrolling, per-sheet page size, editable file name, quality selector and cancelable progress bar. Verified against 4 real public documents (3, 7, 12 and 194 pages), including landscape and 194 pages. Added an "Exportar otro PDF" ("Export another PDF") button to reset the popup after an export. See Known Issues for what still needs coverage before publishing. | Draft |
 
 ## Review Notes
 
 ### Known Issues / Limitations
 
-Cosas que la revisión puede señalar o que el usuario debe saber:
+Things review may flag, or that the user should know:
 
-1. **Riesgo de política.** La función puede interpretarse como elusión de una restricción de descarga impuesta por el propietario del documento. Técnicamente no se rompe ningún cifrado ni control de acceso: solo se leen píxeles ya presentes en la pantalla del usuario, igual que una captura de pantalla. Aun así, la política de la tienda es más estricta que la ley. **Este es el motivo de rechazo más probable.**
-2. **Dependencia del DOM de un sitio de terceros.** La extensión depende de la estructura del visor de documentos, que su propietario puede cambiar sin aviso. Si eso ocurre, la extensión avisa al usuario de que no encontró páginas en lugar de generar un PDF vacío.
-3. **Salida ráster.** El PDF contiene imágenes, no texto: no es buscable ni accesible para lectores de pantalla. Está declarado en la descripción para no inducir a error.
-4. **Fidelidad limitada.** La resolución depende del zoom del visor al exportar.
-5. **Librería de terceros empaquetada.** jsPDF 4.2.1 (MIT) viaja minificada dentro del paquete (`src/vendor/jspdf.umd.min.js`), descargada del tarball oficial de npm y verificada contra el `shasum` publicado por el registro antes de incluirla. Nunca se carga en tiempo de ejecución. Minificada, no ofuscada; el encabezado de licencia se conserva. Las fuentes Inter y JetBrains Mono (SIL OFL 1.1) viajan con su licencia en `assets/fonts/OFL.txt`.
-6. **Verificación en vivo parcial.** Probada contra 4 documentos públicos reales (3, 7, 12 y 194 páginas) en 2 variantes del visor, incluyendo un PDF apaisado y una exportación completa de 194 páginas con auto-scroll (8m19s, 26.9 MB, sin crashes ni páginas en blanco). Ver `docs/selectors.md` para el detalle. Aún sin probar: un documento que exija sesión de Google iniciada (el uso más común; no publicar sin cubrirlo) y un documento real con tamaños de página mixtos. Un iframe en un origen de terceros no está soportado por diseño.
-7. **Documentos largos.** La duración crece con el número de páginas: 194 páginas tardaron ~8m19s en el entorno de prueba, con la barra de progreso avanzando. No es un cuelgue, pero conviene avisarlo en la ficha o en la UI si se quiere evitar que el usuario cancele por impaciencia.
+1. **Policy risk.** The feature may be read as bypassing a download restriction imposed by the document owner. Technically no encryption or access control is broken: it only reads pixels already present on the user's screen, like a screenshot. Even so, store policy is stricter than the law. **This is the most likely reason for rejection.**
+2. **Dependency on a third-party site's DOM.** The extension depends on the document viewer's structure, which its owner can change without notice. If that happens, the extension tells the user it found no pages instead of generating an empty PDF.
+3. **Raster output.** The PDF contains images, not text: it is not searchable and not accessible to screen readers. This is stated in the description to avoid misleading users.
+4. **Limited fidelity.** Resolution depends on the viewer zoom at export time.
+5. **Bundled third-party library.** jsPDF 4.2.1 (MIT) ships minified inside the package (`src/vendor/jspdf.umd.min.js`), downloaded from the official npm tarball and verified against the `shasum` published by the registry before inclusion. It is never loaded at runtime. Minified, not obfuscated; the license header is kept. The Inter and JetBrains Mono fonts (SIL OFL 1.1) ship with their license in `assets/fonts/OFL.txt`.
+6. **Partial live verification.** Tested against 4 real public documents (3, 7, 12 and 194 pages) in 2 viewer variants, including a landscape PDF and a full 194-page export with auto-scroll (8m19s, 26.9 MB, no crashes and no blank pages). See `docs/selectors.md` for details. Still untested: a document that requires a signed-in Google session (the most common use; do not publish without covering it) and a real document with mixed page sizes. An iframe on a third-party origin is not supported by design.
+7. **Long documents.** Duration grows with the number of pages: 194 pages took ~8m19s in the test environment, with the progress bar advancing. It is not a hang, but it is worth mentioning in the store listing or the UI if you want to avoid users canceling out of impatience.
 
 ### Rejection History
 
-Sin envíos todavía.
+No submissions yet.

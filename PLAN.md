@@ -1,110 +1,110 @@
-# Plan de implementación — Exportador de páginas PDF de Google Drive
+# Implementation plan: Google Drive PDF page exporter
 
-> Proyecto: `DrivePDF-Unblocker`
-> Fecha: 2026-07-27
-> Estado: implementado (v0.1.0); este documento conserva el plan y la auditoría originales. Ver `README.md` y `docs/selectors.md` para el estado actual.
-> Fuentes consultadas: skill `chrome-extensions` (GoogleChrome/modern-web-guidance) y documentación oficial de jsPDF vía Context7 MCP (`/parallax/jspdf`).
+> Project: `DrivePDF-Unblocker`
+> Date: 2026-07-27
+> Status: implemented (v0.1.0); this document preserves the original plan and audit. See `README.md` and `docs/selectors.md` for the current state.
+> Sources consulted: `chrome-extensions` skill (GoogleChrome/modern-web-guidance) and the official jsPDF documentation via Context7 MCP (`/parallax/jspdf`).
 
 ---
 
-## 1. Objetivo y alcance
+## 1. Goal and scope
 
-Construir una extensión Chrome (Manifest V3) que, con un clic, convierta a PDF descargable las páginas que el visor de Google Drive **ya renderizó en pantalla** para un documento al que el usuario tiene acceso de lectura.
+Build a Chrome extension (Manifest V3) that, with one click, turns the pages that the Google Drive viewer **has already rendered on screen** for a document the user has read access to into a downloadable PDF.
 
-Funcionalmente equivale a capturar cada página y unirlas en un PDF: no descifra nada, no elude autenticación y no accede a contenido que el usuario no pueda ver. Trabaja únicamente sobre píxeles ya presentes en el DOM de la pestaña activa.
+Functionally it is equivalent to capturing each page and joining them into a PDF: it does not decrypt anything, does not bypass authentication, and does not access content the user cannot see. It works only on pixels already present in the DOM of the active tab.
 
-**Uso previsto:** documentos propios, material de estudio compartido en modo lectura, y accesibilidad/consulta sin conexión. Queda a cargo del usuario respetar los derechos de autor y las condiciones bajo las que recibió el documento.
+**Intended use:** your own documents, study material shared in read-only mode, and accessibility/offline reference. It is the user's responsibility to respect copyright and the terms under which they received the document.
 
-### No objetivos (limitaciones aceptadas de la v1)
+### Non-goals (accepted v1 limitations)
 
-| Limitación | Consecuencia |
+| Limitation | Consequence |
 |---|---|
-| La salida es **ráster** (imágenes), no texto | El PDF no permite buscar, seleccionar ni copiar texto, y no es accesible para lectores de pantalla |
-| La resolución es la del render en pantalla | La nitidez depende del zoom del visor al momento de capturar (ver §5, D6) |
-| Sin OCR | Candidato a v2 |
-| Solo el visor de PDF de Drive | No cubre Google Docs/Sheets nativos ni otros visores |
+| The output is **raster** (images), not text | The PDF does not allow searching, selecting or copying text, and it is not accessible to screen readers |
+| Resolution is that of the on-screen render | Sharpness depends on the viewer zoom at capture time (see §5, D6) |
+| No OCR | Candidate for v2 |
+| Drive PDF viewer only | Does not cover native Google Docs/Sheets or other viewers |
 
-Estas limitaciones deben aparecer explícitas en el README y en la ficha de la tienda: prometer un PDF "igual al original" sería falso.
-
----
-
-## 2. Auditoría del prototipo de partida
-
-El prototipo aportado establece la idea correcta, pero **no funcionaría tal cual**. Estos son los defectos a corregir, en orden de gravedad. Es el insumo principal del plan.
-
-### Bloqueantes
-
-1. **Carga remota de jsPDF.** `jspdf.src = 'https://cloudflare.com'` es una URL placeholder y, aun con la URL real del CDN, MV3 **prohíbe ejecutar código alojado remotamente** (motivo de rechazo automático en la Chrome Web Store) y la CSP de `drive.google.com` bloquearía la inyección de un `<script src>` en la página.
-   → **Corrección:** empaquetar `jspdf.umd.min.js` dentro de la extensión e inyectarlo con `chrome.scripting.executeScript({ files: [...] })` en el *isolated world*, donde la CSP de la página no aplica.
-
-2. **`host_permissions` inválido y con el dominio equivocado.** `"https://google.com*"` no es un match pattern válido (falta la `/` antes del `*`) y el visor de Drive no vive en `google.com` sino en `drive.google.com` y `docs.google.com`.
-   → **Corrección:** `["https://drive.google.com/*", "https://docs.google.com/*"]`.
-
-3. **La validación de URL nunca se cumple.** `tab.url.includes("://google.com")` no coincide con `https://drive.google.com/file/d/…/view`. Además `tab.url` es `undefined` si la extensión no tiene permiso sobre esa pestaña, así que la guarda dispara siempre el `alert` de error.
-   → **Corrección:** ver §5, D2.
-
-4. **Selector CSS ofuscado y sin plan B real.** `ndfHFb-c43HAb-Mo66be-IFXgbe` es una clase minificada generada por Google: rota sin aviso en cada despliegue. El fallback a `img[src^="blob:"]` es razonable pero insuficiente.
-   → **Corrección:** cascada de selectores centralizada en un solo módulo + verificación empírica con el MCP de Chrome DevTools (§4, Fase 0).
-
-### Defectos de calidad de salida
-
-5. **Destruye la relación de aspecto.** `addImage(imgData, 'JPEG', 0, 0, width, height)` estira **toda** página al tamaño A4 vertical. Cualquier documento apaisado, A5, carta u oficio sale deformado.
-   → **Corrección:** derivar el formato de cada página de sus píxeles reales. jsPDF acepta `addPage(format, orientation)` con `format` como array `[ancho, alto]`, y el constructor acepta `format: [w, h]`.
-
-6. **`toDataURL('image/jpeg', 1.0)`** produce un base64 enorme por página con calidad casi sin pérdida; un documento de 200 páginas genera un PDF inmanejable.
-   → **Corrección:** calidad configurable (predeterminado JPEG 0.85), conversión página por página, `addImage` inmediato y liberación del canvas (`canvas.width = 0`) antes de la siguiente. Según la documentación de jsPDF, `addImage` acepta directamente un `HTMLCanvasElement`, lo que evita por completo la cadena base64 intermedia cuando se acepta el JPEG por defecto.
-
-7. **Orden de páginas no garantizado.** `getElementsByClassName` devuelve orden de documento, que *normalmente* coincide con el orden de páginas, pero el visor reutiliza nodos al virtualizar.
-   → **Corrección:** ordenar por posición vertical absoluta (`getBoundingClientRect().top + scrollTop` del contenedor) o por el atributo de número de página si existe.
-
-### Defectos de robustez y UX
-
-8. **Páginas no renderizadas se pierden en silencio.** El prototipo delega en el usuario ("haz scroll despacio") y no detecta huecos. Si faltan páginas, el usuario obtiene un PDF incompleto sin saberlo.
-   → **Corrección:** auto-scroll instrumentado (§4, Fase 3) + comparar páginas capturadas contra el total que informa el visor y **advertir explícitamente** ("se capturaron 12 de 30 páginas").
-
-9. **`alert()` desde código inyectado**: bloquea el hilo principal, es feo y en algunos contextos se suprime.
-   → **Corrección:** overlay propio en la página con barra de progreso y botón de cancelar.
-
-10. **El popup se cierra y se pierde el estado.** El script inyectado sigue corriendo, pero el popup no puede informar nada al reabrirse.
-    → **Corrección:** progreso en `chrome.storage.session` + badge en el icono; el popup lee el estado al abrirse. Regla firme de la skill: **nunca guardar estado en variables globales del service worker**, que se termina a los ~30 s.
-
-11. **Sin soporte para iframes.** Algunas vistas del visor se renderizan en un frame hijo (`docs.google.com/viewer`).
-    → **Corrección:** inyectar con `allFrames: true` y elegir el frame que efectivamente contiene páginas.
-
-12. **Nombre de archivo fijo** (`documento_recuperado.pdf`).
-    → **Corrección:** derivarlo de `document.title` (quitando el sufijo " - Google Drive"), sanearlo y permitir edición en el popup.
-
-13. **Sin manejo de canvas contaminado.** Si alguna imagen llega de otro origen sin CORS, `toDataURL` lanza `SecurityError` y todo el proceso muere. Las URLs `blob:` heredan el origen de la página, así que normalmente no ocurre, pero hay que capturar el error y explicarlo.
-
-14. **Sin iconos.** El manifest original no declara ninguno — lo cual es preferible a referenciar archivos inexistentes, pero conviene generarlos de verdad (§4, Fase 1).
-
-### Cuestión de marca y política
-
-15. El nombre "Extractor de PDF Protegidos de Drive" usa la marca **Drive** y sugiere elusión de protecciones: doble motivo de rechazo en la tienda. Ver §7.
+These limitations must appear explicitly in the README and the store listing: promising a PDF "identical to the original" would be false.
 
 ---
 
-## 3. Arquitectura
+## 2. Audit of the starting prototype
+
+The supplied prototype establishes the right idea, but **it would not work as is**. These are the defects to fix, in order of severity. This is the main input for the plan.
+
+### Blockers
+
+1. **Remote loading of jsPDF.** `jspdf.src = 'https://cloudflare.com'` is a placeholder URL and, even with the real CDN URL, MV3 **forbids executing remotely hosted code** (grounds for automatic rejection in the Chrome Web Store) and `drive.google.com`'s CSP would block injecting a `<script src>` into the page.
+   **Fix:** bundle `jspdf.umd.min.js` inside the extension and inject it with `chrome.scripting.executeScript({ files: [...] })` in the *isolated world*, where the page CSP does not apply.
+
+2. **Invalid `host_permissions` with the wrong domain.** `"https://google.com*"` is not a valid match pattern (the `/` before the `*` is missing) and the Drive viewer does not live at `google.com` but at `drive.google.com` and `docs.google.com`.
+   **Fix:** `["https://drive.google.com/*", "https://docs.google.com/*"]`.
+
+3. **URL validation never passes.** `tab.url.includes("://google.com")` does not match `https://drive.google.com/file/d/…/view`. Also `tab.url` is `undefined` if the extension does not have permission for that tab, so the guard always fires the error `alert`.
+   **Fix:** see §5, D2.
+
+4. **Obfuscated CSS selector with no real fallback.** `ndfHFb-c43HAb-Mo66be-IFXgbe` is a minified class generated by Google: it breaks without warning on every deployment. The fallback to `img[src^="blob:"]` is reasonable but insufficient.
+   **Fix:** selector cascade centralized in a single module plus empirical verification with the Chrome DevTools MCP (§4, Phase 0).
+
+### Output quality defects
+
+5. **Destroys the aspect ratio.** `addImage(imgData, 'JPEG', 0, 0, width, height)` stretches **every** page to portrait A4 size. Any landscape, A5, letter or legal document comes out distorted.
+   **Fix:** derive each page's format from its real pixels. jsPDF accepts `addPage(format, orientation)` with `format` as a `[width, height]` array, and the constructor accepts `format: [w, h]`.
+
+6. **`toDataURL('image/jpeg', 1.0)`** produces a huge base64 string per page at near-lossless quality; a 200-page document generates an unmanageable PDF.
+   **Fix:** configurable quality (default JPEG 0.85), page-by-page conversion, immediate `addImage`, and canvas release (`canvas.width = 0`) before the next one. According to the jsPDF documentation, `addImage` accepts an `HTMLCanvasElement` directly, which avoids the intermediate base64 string entirely when the default JPEG is accepted.
+
+7. **Page order not guaranteed.** `getElementsByClassName` returns document order, which *usually* matches page order, but the viewer reuses nodes when virtualizing.
+   **Fix:** sort by absolute vertical position (`getBoundingClientRect().top + scrollTop` of the container) or by the page-number attribute if it exists.
+
+### Robustness and UX defects
+
+8. **Unrendered pages are lost silently.** The prototype delegates to the user ("scroll slowly") and does not detect gaps. If pages are missing, the user gets an incomplete PDF without knowing.
+   **Fix:** instrumented auto-scroll (§4, Phase 3), compare the captured pages against the total reported by the viewer, and **warn explicitly** ("se capturaron 12 de 30 páginas": 12 of 30 pages were captured).
+
+9. **`alert()` from injected code**: blocks the main thread, is ugly, and is suppressed in some contexts.
+   **Fix:** custom overlay on the page with a progress bar and a cancel button.
+
+10. **The popup closes and state is lost.** The injected script keeps running, but the popup cannot report anything when reopened.
+    **Fix:** progress in `chrome.storage.session` plus a badge on the icon; the popup reads the state when it opens. Firm rule from the skill: **never store state in global variables of the service worker**, which is terminated after ~30 s.
+
+11. **No iframe support.** Some viewer views render in a child frame (`docs.google.com/viewer`).
+    **Fix:** inject with `allFrames: true` and choose the frame that actually contains pages.
+
+12. **Fixed file name** (`documento_recuperado.pdf`).
+    **Fix:** derive it from `document.title` (removing the " - Google Drive" suffix), sanitize it, and allow editing in the popup.
+
+13. **No tainted canvas handling.** If any image comes from another origin without CORS, `toDataURL` throws `SecurityError` and the whole process dies. `blob:` URLs inherit the page origin, so this normally does not happen, but the error must be caught and explained.
+
+14. **No icons.** The original manifest declares none, which is preferable to referencing nonexistent files, but they should be generated for real (§4, Phase 1).
+
+### Brand and policy question
+
+15. The name "Extractor de PDF Protegidos de Drive" uses the **Drive** trademark and suggests bypassing protections: two grounds for rejection in the store. See §7.
+
+---
+
+## 3. Architecture
 
 ```
 DrivePDF-Unblocker/
 ├── manifest.json
-├── PLAN.md                      ← este archivo
-├── CHROMEWEBSTORE.md            ← ficha de tienda (obligatorio en este repo)
+├── PLAN.md                      ← this file
+├── CHROMEWEBSTORE.md            ← store listing (required in this repo)
 ├── README.md
 ├── src/
 │   ├── popup/
-│   │   ├── popup.html           ← sin scripts ni handlers inline (CSP)
+│   │   ├── popup.html           ← no inline scripts or handlers (CSP)
 │   │   ├── popup.css
-│   │   └── popup.js             ← todo async/await, sin cadenas .then()
+│   │   └── popup.js             ← all async/await, no .then() chains
 │   ├── content/
-│   │   ├── page-detector.js     ← ÚNICO lugar con selectores de Drive
-│   │   ├── capture.js           ← orquestador: scroll, captura, PDF, descarga
-│   │   └── overlay.css          ← clases con prefijo dpu- para no chocar
+│   │   ├── page-detector.js     ← ONLY place with Drive selectors
+│   │   ├── capture.js           ← orchestrator: scroll, capture, PDF, download
+│   │   └── overlay.css          ← classes prefixed dpu- to avoid collisions
 │   ├── background/
-│   │   └── service-worker.js    ← estado en storage.session + badge
+│   │   └── service-worker.js    ← state in storage.session + badge
 │   └── vendor/
-│       └── jspdf.umd.min.js     ← empaquetado, NUNCA desde CDN
+│       └── jspdf.umd.min.js     ← bundled, NEVER from a CDN
 ├── icons/
 │   ├── icon-16.png  (16×16)
 │   ├── icon-48.png  (48×48)
@@ -113,11 +113,11 @@ DrivePDF-Unblocker/
 │   ├── generate-icons.mjs
 │   └── package-extension.sh
 ├── docs/
-│   └── selectors.md             ← hallazgos del reconocimiento de DOM
-└── store-assets/                ← capturas 1280×800, excluido del ZIP
+│   └── selectors.md             ← DOM reconnaissance findings
+└── store-assets/                ← 1280×800 screenshots, excluded from the ZIP
 ```
 
-### manifest.json previsto
+### manifest.json as planned
 
 ```json
 {
@@ -148,162 +148,162 @@ DrivePDF-Unblocker/
 }
 ```
 
-Nota: `description` debe quedar ≤ 132 caracteres para coincidir con la descripción corta de la tienda. Sin `content_scripts` declarativos — todo se inyecta bajo demanda para no ejecutar nada mientras el usuario simplemente navega por Drive.
+Note: `description` must stay ≤ 132 characters to match the store short description. No declarative `content_scripts`: everything is injected on demand so nothing runs while the user is simply browsing Drive.
 
-### Flujo de ejecución
+### Execution flow
 
-1. El usuario abre el PDF en el visor de Drive y pulsa el icono de la extensión.
-2. `popup.js` obtiene la pestaña activa, valida que sea Drive, lee las preferencias de `chrome.storage.local` y muestra el formulario (nombre de archivo, calidad, auto-scroll sí/no).
-3. Al confirmar, el popup inyecta `vendor/jspdf.umd.min.js` + `content/page-detector.js` + `content/capture.js` con `chrome.scripting.executeScript({ files, target: { tabId, allFrames: true } })` y envía los parámetros por mensaje.
-4. `capture.js` monta el overlay de progreso, localiza el contenedor de scroll, y **captura mientras hace scroll** (ver Fase 3).
-5. Por cada página: canvas → `addPage([w,h], orientation)` → `addImage` → liberar canvas. Reporta progreso al service worker en cada página.
-6. Al terminar: `doc.output('blob')` → `URL.createObjectURL` → `<a download>` → `revokeObjectURL`. Overlay muestra el resumen (páginas capturadas / total esperado).
-7. El service worker limpia el badge y el estado de `storage.session`.
-
----
-
-## 4. Fases y tareas
-
-### Fase 0 — Reconocimiento del DOM real (hacer *antes* de escribir código)
-
-El punto más frágil de todo el proyecto son los selectores de Drive. No se inventan: se miden. Con el MCP de Chrome DevTools ya configurado en `.mcp.json`:
-
-- [ ] Abrir con `navigate_page` un PDF de Drive **propio** en modo vista.
-- [ ] Con `evaluate_script`, volcar diagnóstico: conteo de `img[src^="blob:"]`, de `canvas`, clases de sus contenedores, `naturalWidth/Height`, número total de páginas que informa el visor, y qué ancestro es el contenedor scrollable.
-- [ ] Repetir con un documento apaisado y con uno de páginas de tamaños mixtos.
-- [ ] Repetir con la vista embebida (`docs.google.com/viewer`) para confirmar si hay iframes en juego.
-- [ ] Registrar todo en `docs/selectors.md`, con fecha, e indicar qué variante del visor se observó.
-- [ ] Verificar el supuesto de D2: ¿`tab.url` viene poblado con solo `host_permissions`, sin permiso `tabs`?
-
-**Criterio de salida:** una lista de selectores verificada, no adivinada.
-
-### Fase 1 — Andamiaje
-
-- [ ] Crear `manifest.json` según §3.
-- [ ] `scripts/generate-icons.mjs` que genere los tres PNG en sus dimensiones exactas. Regla firme: si un icono se declara en el manifest, **el archivo debe existir** y medir lo declarado.
-- [ ] Descargar `jspdf.umd.min.js` a `src/vendor/` y anotar la versión exacta en el README. Minificado sí, ofuscado no (la ofuscación es motivo de rechazo).
-- [ ] `git init` y primer commit (el directorio aún no es un repo).
-
-### Fase 2 — Popup y detección
-
-- [ ] `popup.html` con markup limpio: script externo, cero `onclick`.
-- [ ] `popup.js`: `chrome.tabs.query` → validación de pestaña → formulario → invocación. Todo `async/await`.
-- [ ] Estados de UI: listo, "abre un PDF de Drive", en progreso (con progreso restaurado desde `storage.session`), terminado, error.
-- [ ] `page-detector.js` con la cascada de selectores de la Fase 0 y una función `detectPages()` que devuelva elementos ordenados por posición vertical, más `expectedPageCount()`.
-- [ ] Persistir preferencias en `chrome.storage.local`.
-
-### Fase 3 — Captura y auto-scroll
-
-Decisión clave: **capturar durante el scroll**, no después. El visor de Drive virtualiza y descarta los blobs de páginas alejadas del viewport, así que "hacer scroll y luego capturar todo" pierde páginas en documentos largos. Capturar en el momento en que cada página está renderizada elimina la instrucción manual de "haz scroll despacio".
-
-- [ ] Localizar el contenedor scrollable subiendo por los ancestros hasta encontrar `scrollHeight > clientHeight`.
-- [ ] Bucle: capturar las páginas visibles no capturadas aún (indexadas por número de página para no duplicar) → avanzar `scrollTop` ~80 % de `clientHeight` → esperar render.
-- [ ] Espera de render con `MutationObserver` más comprobación de `img.complete`/`img.decode()`, con timeout por paso y reintentos acotados.
-- [ ] Batching con `requestAnimationFrame` y `scheduler.yield()` entre páginas para no congelar la pestaña.
-- [ ] Overlay de progreso con botón de cancelar; enviar progreso al service worker en cada página.
-- [ ] Fallback conservado: modo "capturar lo ya visible" para cuando el auto-scroll falle.
-- [ ] `try/catch` alrededor de la exportación del canvas con mensaje claro ante `SecurityError`.
-
-### Fase 4 — Generación del PDF
-
-- [ ] Instanciar `new jsPDF({ unit: 'pt', format: [w0, h0], orientation })` con las dimensiones de la **primera** página.
-- [ ] Por cada página siguiente: `addPage([w, h], orientation)` con sus dimensiones propias, luego `addImage(...)` cubriendo la página completa.
-- [ ] Calidad seleccionable: Alta (PNG), Equilibrada (JPEG 0.85, predeterminado), Compacta (JPEG 0.7). Usar el parámetro `compression` de `addImage` (`'NONE' | 'FAST' | 'MEDIUM' | 'SLOW'`) para el flujo del PDF.
-- [ ] Liberar cada canvas inmediatamente después de añadirlo.
-- [ ] `output('blob')` → descarga por `<a download>` con el nombre saneado.
-- [ ] Advertencia visible si `páginas capturadas < total esperado`.
-
-### Fase 5 — Pruebas
-
-- [ ] `install_extension` + `trigger_extension_action` + `take_screenshot` sobre un documento real; revisar `list_console_messages` buscando errores.
-- [ ] Matriz de casos: 1 página · ~30 páginas · 200+ páginas · apaisado · tamaños mixtos · vista embebida en iframe · pestaña que no es Drive · documento sin permiso de lectura.
-- [ ] Degradación elegante en `chrome://`, `about:blank` y pestañas sin permiso: mensaje claro, nunca una excepción sin capturar.
-- [ ] Verificar que el PDF abre correctamente en Chrome, Acrobat y `pdftoppm`/`qpdf`, y comprobar el conteo de páginas.
-- [ ] Medir consumo de memoria en el documento de 200+ páginas (`take_heapsnapshot`).
-- [ ] Ciclo de iteración con `reload_extension` tras cada cambio.
-
-### Fase 6 — Empaquetado y documentación
-
-- [ ] `scripts/package-extension.sh` que produzca un ZIP limpio excluyendo `.git/`, `store-assets/`, `docs/`, `PLAN.md`, `CHROMEWEBSTORE.md`, `README.md`, `scripts/`.
-- [ ] `README.md`: instalación en modo desarrollador, uso, limitaciones de §1, versión de jsPDF empaquetada.
-- [ ] Completar `CHROMEWEBSTORE.md` con los datos reales del manifest final.
-- [ ] Capturas 1280×800 para la ficha, tomadas con un documento de prueba propio y sin datos personales visibles.
+1. The user opens the PDF in the Drive viewer and clicks the extension icon.
+2. `popup.js` gets the active tab, validates that it is Drive, reads preferences from `chrome.storage.local`, and shows the form (file name, quality, auto-scroll yes/no).
+3. On confirm, the popup injects `vendor/jspdf.umd.min.js` + `content/page-detector.js` + `content/capture.js` with `chrome.scripting.executeScript({ files, target: { tabId, allFrames: true } })` and sends the parameters by message.
+4. `capture.js` mounts the progress overlay, locates the scroll container, and **captures while scrolling** (see Phase 3).
+5. For each page: canvas → `addPage([w,h], orientation)` → `addImage` → release canvas. Reports progress to the service worker on every page.
+6. When done: `doc.output('blob')` → `URL.createObjectURL` → `<a download>` → `revokeObjectURL`. The overlay shows the summary (captured pages / expected total).
+7. The service worker clears the badge and the `storage.session` state.
 
 ---
 
-## 5. Decisiones técnicas
+## 4. Phases and tasks
 
-| # | Decisión | Motivo |
+### Phase 0: Real DOM reconnaissance (do *before* writing code)
+
+The most fragile part of the whole project is the Drive selectors. They are not invented: they are measured. With the Chrome DevTools MCP already configured in `.mcp.json`:
+
+- [ ] Open **your own** Drive PDF in view mode with `navigate_page`.
+- [ ] With `evaluate_script`, dump diagnostics: counts of `img[src^="blob:"]` and `canvas`, their container classes, `naturalWidth/Height`, total page count reported by the viewer, and which ancestor is the scroll container.
+- [ ] Repeat with a landscape document and with one with mixed page sizes.
+- [ ] Repeat with the embedded view (`docs.google.com/viewer`) to confirm whether iframes are involved.
+- [ ] Record everything in `docs/selectors.md`, with the date, and note which viewer variant was observed.
+- [ ] Verify the D2 assumption: is `tab.url` populated with only `host_permissions`, without the `tabs` permission?
+
+**Exit criterion:** a verified selector list, not a guessed one.
+
+### Phase 1: Scaffolding
+
+- [ ] Create `manifest.json` per §3.
+- [ ] `scripts/generate-icons.mjs` that generates the three PNGs at their exact dimensions. Firm rule: if an icon is declared in the manifest, **the file must exist** and measure what is declared.
+- [ ] Download `jspdf.umd.min.js` to `src/vendor/` and note the exact version in the README. Minified yes, obfuscated no (obfuscation is grounds for rejection).
+- [ ] `git init` and first commit (the directory is not yet a repo).
+
+### Phase 2: Popup and detection
+
+- [ ] `popup.html` with clean markup: external script, zero `onclick`.
+- [ ] `popup.js`: `chrome.tabs.query` → tab validation → form → invocation. All `async/await`.
+- [ ] UI states: ready, "abre un PDF de Drive" ("open a Drive PDF"), in progress (with progress restored from `storage.session`), finished, error.
+- [ ] `page-detector.js` with the Phase 0 selector cascade and a `detectPages()` function that returns elements sorted by vertical position, plus `expectedPageCount()`.
+- [ ] Persist preferences in `chrome.storage.local`.
+
+### Phase 3: Capture and auto-scroll
+
+Key decision: **capture during the scroll**, not after. The Drive viewer virtualizes and discards page blobs far from the viewport, so "scroll and then capture everything" loses pages in long documents. Capturing at the moment each page is rendered removes the manual "scroll slowly" instruction.
+
+- [ ] Locate the scroll container by walking up the ancestors until finding `scrollHeight > clientHeight`.
+- [ ] Loop: capture visible pages not captured yet (indexed by page number to avoid duplicates) → advance `scrollTop` ~80% of `clientHeight` → wait for render.
+- [ ] Wait for render with `MutationObserver` plus an `img.complete`/`img.decode()` check, with a per-step timeout and bounded retries.
+- [ ] Batching with `requestAnimationFrame` and `scheduler.yield()` between pages so as not to freeze the tab.
+- [ ] Progress overlay with a cancel button; send progress to the service worker on every page.
+- [ ] Preserved fallback: "capture what is already visible" mode for when auto-scroll fails.
+- [ ] `try/catch` around canvas export with a clear message on `SecurityError`.
+
+### Phase 4: PDF generation
+
+- [ ] Instantiate `new jsPDF({ unit: 'pt', format: [w0, h0], orientation })` with the dimensions of the **first** page.
+- [ ] For each following page: `addPage([w, h], orientation)` with its own dimensions, then `addImage(...)` covering the full page.
+- [ ] Selectable quality: High ("Alta", PNG), Balanced ("Equilibrada", JPEG 0.85, default), Compact ("Compacta", JPEG 0.7). Use the `compression` parameter of `addImage` (`'NONE' | 'FAST' | 'MEDIUM' | 'SLOW'`) for the PDF stream.
+- [ ] Release each canvas immediately after adding it.
+- [ ] `output('blob')` → download via `<a download>` with the sanitized name.
+- [ ] Visible warning if `captured pages < expected total`.
+
+### Phase 5: Tests
+
+- [ ] `install_extension` + `trigger_extension_action` + `take_screenshot` on a real document; check `list_console_messages` for errors.
+- [ ] Case matrix: 1 page · ~30 pages · 200+ pages · landscape · mixed sizes · embedded view in iframe · non-Drive tab · document without read permission.
+- [ ] Graceful degradation on `chrome://`, `about:blank` and tabs without permission: clear message, never an uncaught exception.
+- [ ] Verify the PDF opens correctly in Chrome, Acrobat and `pdftoppm`/`qpdf`, and check the page count.
+- [ ] Measure memory usage on the 200+ page document (`take_heapsnapshot`).
+- [ ] Iteration cycle with `reload_extension` after every change.
+
+### Phase 6: Packaging and documentation
+
+- [ ] `scripts/package-extension.sh` that produces a clean ZIP excluding `.git/`, `store-assets/`, `docs/`, `PLAN.md`, `CHROMEWEBSTORE.md`, `README.md`, `scripts/`.
+- [ ] `README.md`: install in developer mode, usage, limitations from §1, bundled jsPDF version.
+- [ ] Complete `CHROMEWEBSTORE.md` with the real data from the final manifest.
+- [ ] 1280×800 screenshots for the listing, taken with our own test document and no visible personal data.
+
+---
+
+## 5. Technical decisions
+
+| # | Decision | Reason |
 |---|---|---|
-| **D1** | jsPDF **empaquetado**, nunca desde CDN | MV3 prohíbe código remoto; además la CSP de Drive bloquearía la inyección. Corrige el defecto nº 1 |
-| **D2** | Sin permiso `tabs`; detectar la pestaña por `tab.url` poblado gracias a `host_permissions` | Menos permisos = revisión más fácil. `tab.url` llega `undefined` en pestañas fuera de los hosts declarados, lo que sirve como señal. **A verificar en Fase 0**; si resulta poco fiable, añadir `tabs` y justificarlo |
-| **D3** | Inyección en el **isolated world** (predeterminado), no en `MAIN` | El código del content script no está sujeto a la CSP de la página y no contamina el `window` de Drive |
-| **D4** | La descarga la dispara el content script con `<a download>` | Alternativa considerada: mover el blob al service worker para usar `chrome.downloads`. Descartada porque los mensajes se serializan a JSON y un `ArrayBuffer` no sobrevive; pasarlo en base64 duplicaría memoria. Un documento offscreen tampoco sirve: **no tiene acceso a `chrome.downloads`**. Coste aceptado: sin barra de progreso nativa de descarga |
-| **D5** | Selectores aislados en `page-detector.js` | Cuando Google rote sus clases minificadas, se arregla un archivo. Corrige el defecto nº 4 |
-| **D6** | Sugerir subir el zoom del visor antes de capturar | La resolución de salida es la del render; más zoom = blobs más grandes = PDF más nítido. Documentarlo como consejo, no automatizarlo en v1 |
-| **D7** | Sin permiso `downloads`, sin analítica, sin red | La extensión no hace ni una petición de red. Simplifica radicalmente la declaración de privacidad |
-| **D8** | Capturar **durante** el scroll | El visor descarta blobs fuera del viewport; capturar al final pierde páginas. Corrige el defecto nº 8 |
+| **D1** | jsPDF **bundled**, never from a CDN | MV3 forbids remote code; Drive's CSP would also block injection. Fixes defect 1 |
+| **D2** | No `tabs` permission; detect the tab by `tab.url` populated thanks to `host_permissions` | Fewer permissions means easier review. `tab.url` arrives as `undefined` in tabs outside the declared hosts, which works as a signal. **To verify in Phase 0**; if it proves unreliable, add `tabs` and justify it |
+| **D3** | Injection in the **isolated world** (default), not `MAIN` | Content script code is not subject to the page CSP and does not pollute Drive's `window` |
+| **D4** | The content script triggers the download with `<a download>` | Alternative considered: move the blob to the service worker to use `chrome.downloads`. Discarded because messages are serialized to JSON and an `ArrayBuffer` does not survive; passing it in base64 would duplicate memory. An offscreen document does not work either: **it has no access to `chrome.downloads`**. Accepted cost: no native download progress bar |
+| **D5** | Selectors isolated in `page-detector.js` | When Google rotates its minified classes, one file gets fixed. Fixes defect 4 |
+| **D6** | Suggest raising the viewer zoom before capturing | Output resolution is that of the render; more zoom means larger blobs and a sharper PDF. Document it as a tip, do not automate it in v1 |
+| **D7** | No `downloads` permission, no analytics, no network | The extension does not make a single network request. Radically simplifies the privacy declaration |
+| **D8** | Capture **during** the scroll | The viewer discards blobs outside the viewport; capturing at the end loses pages. Fixes defect 8 |
 
 ---
 
-## 6. Riesgos
+## 6. Risks
 
-| Riesgo | Probabilidad | Mitigación |
+| Risk | Probability | Mitigation |
 |---|---|---|
-| Google cambia el DOM del visor | **Alta** (asumir que pasará) | D5, `docs/selectors.md` con fecha, y detección de "0 páginas" con mensaje honesto en lugar de un PDF vacío |
-| Documentos muy largos agotan la memoria | Media | Liberación de canvas por página, calidad predeterminada equilibrada, prueba de 200+ páginas en Fase 5 |
-| Rechazo en la Chrome Web Store | Media-alta | Ver §7 — la instalación local es la vía de distribución principal |
-| `SecurityError` por canvas contaminado | Baja | `try/catch` con mensaje explicativo |
-| Virtualización agresiva que impide capturar todo | Media | D8 más el aviso de "capturadas N de M" |
+| Google changes the viewer DOM | **High** (assume it will happen) | D5, dated `docs/selectors.md`, and "0 pages" detection with an honest message instead of an empty PDF |
+| Very long documents exhaust memory | Medium | Per-page canvas release, balanced default quality, 200+ page test in Phase 5 |
+| Rejection in the Chrome Web Store | Medium-high | See §7; local installation is the main distribution path |
+| `SecurityError` from tainted canvas | Low | `try/catch` with an explanatory message |
+| Aggressive virtualization that prevents capturing everything | Medium | D8 plus the "captured N of M" warning |
 
 ---
 
-## 7. Distribución: expectativa realista
+## 7. Distribution: realistic expectation
 
-Conviene decidir esto **antes** de invertir en material de tienda.
+It is worth deciding this **before** investing in store material.
 
-La función es legítima (capturar píxeles ya visibles, sin romper cifrado ni autenticación), pero la política de la Chrome Web Store es más estricta que la ley y sus revisores pueden considerar que la extensión elude una restricción impuesta por el propietario del documento. **Publicación pública = riesgo real de rechazo.**
+The feature is legitimate (capturing pixels already visible, without breaking encryption or authentication), but Chrome Web Store policy is stricter than the law and its reviewers may consider that the extension bypasses a restriction imposed by the document owner. **Public publication means a real risk of rejection.**
 
-Recomendación, en orden:
+Recommendation, in order:
 
-1. **Instalación local sin empaquetar** (modo desarrollador) — es lo que el prototipo original planteaba y funciona sin ninguna aprobación. Vía principal.
-2. **Publicación como "unlisted"** — instalable por enlace, no aparece en búsquedas. Menor exposición.
-3. **Publicación pública** — solo si se acepta el riesgo, y con estas correcciones mínimas:
-   - Renombrar: fuera "Drive", "Google" y "Unblocker" del nombre visible (infracción de marca + connotación de elusión). Propuesta: **"PDF Page Exporter"**.
-   - Describir la función, no la elusión: "exporta a PDF las páginas que ya se muestran en tu navegador".
-   - Propósito único redactado con precisión, y una justificación específica por cada permiso.
-   - Política de privacidad publicada y accesible, coherente con el hecho de que no se recoge ni transmite ningún dato.
+1. **Local unpacked installation** (developer mode): what the original prototype proposed, and it works without any approval. Main path.
+2. **Publication as "unlisted"**: installable by link, does not appear in searches. Less exposure.
+3. **Public publication**: only if the risk is accepted, and with these minimum corrections:
+   - Rename: remove "Drive", "Google" and "Unblocker" from the visible name (trademark infringement plus bypass connotation). Proposal: **"PDF Page Exporter"**.
+   - Describe the function, not the bypass: "exports to PDF the pages your browser already displays".
+   - Single purpose written precisely, and a specific justification for each permission.
+   - Privacy policy published and accessible, consistent with the fact that no data is collected or transmitted.
 
-El nombre del repositorio (`DrivePDF-Unblocker`) puede quedarse como está; lo que importa es el nombre del manifest y de la ficha.
-
----
-
-## 8. Mejoras propuestas para después de la v1
-
-Las dos que el prototipo original planteaba como preguntas abiertas ya están **incorporadas a la v1**: renombrar el archivo antes de guardar (Fase 2) y barra de progreso (Fase 3). Para más adelante:
-
-- **Capa de texto por OCR** — elimina la limitación más grave de §1. Vía Tesseract.js empaquetado, o la Prompt API integrada de Chrome (disponible en service worker, popup y side panel sin permisos extra).
-- **Rango de páginas** ("solo 5–20").
-- **Atajo de teclado** con la API `commands`.
-- **Exportar a PNG/ZIP** en lugar de PDF.
-- **Recorte automático de márgenes** del visor.
+The repository name (`DrivePDF-Unblocker`) can stay as it is; what matters is the manifest name and the store listing name.
 
 ---
 
-## 9. Checklist de verificación previo a entrega
+## 8. Proposed improvements after v1
 
-Directamente del checklist de la skill `chrome-extensions`, filtrado a lo aplicable:
+The two open questions raised by the original prototype are already **incorporated into v1**: renaming the file before saving (Phase 2) and a progress bar (Phase 3). For later:
 
-- [ ] `manifest_version: 3`, sin ninguna API de V2 (`chrome.action`, no `chrome.browserAction`; `chrome.scripting`, no `chrome.tabs.executeScript`)
-- [ ] Todos los iconos declarados existen como archivos reales con las dimensiones exactas
-- [ ] Clave `"action"` presente en el manifest (obligatoria si se usa `chrome.action.*`, incluso vacía)
-- [ ] Cero `eval()`, cero scripts inline, cero handlers inline en HTML
-- [ ] Todo `async`/`await`, ninguna cadena `.then()`
-- [ ] `return true` en los listeners de `onMessage` con respuesta asíncrona
-- [ ] El service worker no guarda estado en variables globales
-- [ ] Actualizaciones de DOM por lotes con `requestAnimationFrame`
-- [ ] Manejo de errores en toda operación asíncrona
-- [ ] `host_permissions` limitado a los dos hosts de Google, sin `<all_urls>`
-- [ ] Cero código remoto: todo el JS viaja en el paquete
-- [ ] ZIP sin `.git/`, `PLAN.md`, `CHROMEWEBSTORE.md`, `README.md`, `store-assets/`, `scripts/`
-- [ ] `CHROMEWEBSTORE.md` al día con el manifest final
+- **OCR text layer**: removes the most serious limitation from §1. Via bundled Tesseract.js, or Chrome's built-in Prompt API (available in service worker, popup and side panel without extra permissions).
+- **Page range** ("only 5-20").
+- **Keyboard shortcut** with the `commands` API.
+- **Export to PNG/ZIP** instead of PDF.
+- **Automatic cropping of viewer margins**.
+
+---
+
+## 9. Pre-delivery verification checklist
+
+Directly from the `chrome-extensions` skill checklist, filtered to what applies:
+
+- [ ] `manifest_version: 3`, no V2 API at all (`chrome.action`, not `chrome.browserAction`; `chrome.scripting`, not `chrome.tabs.executeScript`)
+- [ ] Every declared icon exists as a real file with the exact dimensions
+- [ ] `"action"` key present in the manifest (required if `chrome.action.*` is used, even if empty)
+- [ ] Zero `eval()`, zero inline scripts, zero inline handlers in HTML
+- [ ] All `async`/`await`, no `.then()` chains
+- [ ] `return true` in `onMessage` listeners with an async response
+- [ ] The service worker does not store state in global variables
+- [ ] Batched DOM updates with `requestAnimationFrame`
+- [ ] Error handling in every async operation
+- [ ] `host_permissions` limited to the two Google hosts, no `<all_urls>`
+- [ ] Zero remote code: all JS ships in the package
+- [ ] ZIP without `.git/`, `PLAN.md`, `CHROMEWEBSTORE.md`, `README.md`, `store-assets/`, `scripts/`
+- [ ] `CHROMEWEBSTORE.md` up to date with the final manifest
