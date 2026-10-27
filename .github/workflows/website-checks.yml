@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   validate:
+    name: Website checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
