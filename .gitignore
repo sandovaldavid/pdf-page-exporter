@@ -1,6 +1,4 @@
 *.zip
-store-assets/*.png
-store-assets/*.jpg
 .DS_Store
 Thumbs.db
 *.log
