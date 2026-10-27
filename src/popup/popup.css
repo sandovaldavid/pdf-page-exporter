@@ -1,6 +1,6 @@
 /* Consumes tokens from ../styles/tokens.css — no hardcoded colors here,
-   per design-system.md section 19 ("Evitar hardcoded colors fuera del
-   archivo central de tokens"). */
+   per design-system.md section 17 ("Avoid hardcoded colors outside the
+   central token file"). */
 
 body {
   width: 320px;

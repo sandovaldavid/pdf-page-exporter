@@ -101,6 +101,8 @@ DrivePDF-Unblocker/
 │   │   ├── page-detector.js     ← ONLY place with Drive selectors
 │   │   ├── capture.js           ← orchestrator: scroll, capture, PDF, download
 │   │   └── overlay.css          ← classes prefixed dpu- to avoid collisions
+│   ├── styles/
+│   │   └── tokens.css           ← extension design tokens (docs/design-system.md)
 │   ├── background/
 │   │   └── service-worker.js    ← state in storage.session + badge
 │   └── vendor/
@@ -113,6 +115,7 @@ DrivePDF-Unblocker/
 │   ├── generate-icons.mjs
 │   └── package-extension.sh
 ├── docs/
+│   ├── design-system.md         ← extension design system specification
 │   └── selectors.md             ← DOM reconnaissance findings
 └── store-assets/                ← 1280×800 screenshots, excluded from the ZIP
 ```

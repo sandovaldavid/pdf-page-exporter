@@ -1,7 +1,7 @@
-/* David Sandoval — Identity System tokens.
-   Source: docs/design-system.md (Figma "Identity System", v1.0, 2026-07-26).
+/* PDF Page Exporter design tokens.
+   Spec: docs/design-system.md.
    Primitives -> semantic aliases. Light is the default; Dark overrides via
-   prefers-color-scheme, per section 18 of the design system. */
+   prefers-color-scheme, per section 16 of the design system. */
 
 @font-face {
   font-family: "Inter";
@@ -22,12 +22,12 @@
 :root {
   color-scheme: light dark;
 
-  /* Font families (design-system.md section 3) */
+  /* Font families (design-system.md section 6) */
   --ds-font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --ds-font-heading: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
   --ds-font-technical: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
 
-  /* Light primitives (section 7): color/primary/*-light, color/base/* */
+  /* Light primitives (section 9): color/primary/*-light, color/base/* */
   --ds-primary-400: #3b82f6;
   --ds-primary-500: #0a5cd6;
   --ds-primary-600: #0044cc;
@@ -44,18 +44,18 @@
   --ds-success-bg: #10b9810d;
   --ds-success-border: #10b98166;
   /* No semantic error background/border pair is defined in the design
-     system (section 7 only has color/error/500 and /900) — derive one from
+     system (section 9 only has color/error/500 and /900) — derive one from
      the error primitive with color-mix() instead of hardcoding a new hex. */
   --ds-error-500: #ff1744;
 
-  /* Semantic spacing (section 11) */
+  /* Semantic spacing (section 12) */
   --ds-space-1: 4px;
   --ds-space-2: 8px;
   --ds-space-3: 12px;
   --ds-space-4: 16px;
   --ds-space-6: 24px;
 
-  /* Component aliases (section 18) */
+  /* Component aliases (section 16) */
   --ds-accent: var(--ds-primary-500);
   --ds-accent-bright: var(--ds-primary-400);
   --ds-accent-hover: var(--ds-primary-600);
@@ -88,7 +88,7 @@
   }
 }
 
-/* Explicit in-app theme override (section 18), for when the extension
+/* Explicit in-app theme override (section 16), for when the extension
    offers a theme toggle independent of the OS preference. Unused today —
    both popup surfaces follow the OS theme — kept so it's a one-line switch
    away when that need shows up. */
