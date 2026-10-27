@@ -82,7 +82,7 @@ Spanish (Latin America). ⚠️ Confirm; consider publishing in English as well.
 
 All screenshots must use **our own test document with no personal data**, never someone else's material and never material with a visible third-party trademark.
 
-1. ✅ `store-assets/store-1.png` (1280×800): real popup over our own sample document, with the file name and quality selector visible. The document in the background is generic, with no personal data and no third-party trademarks.
+1. ✅ `store-assets/store-1.png` (1280×800): real popup, captured from the installed extension, with the file name and quality selector visible. The popup sits on a neutral brand background next to the icon, the name and one line of copy. No document, no personal data and no third-party trademarks.
 2. ⬜ The progress overlay halfway through an export, showing "página 14 de 30" (page 14 of 30).
 3. ⬜ The resulting PDF already open, with the thumbnail panel visible to show that it keeps all pages and their orientations.
 
