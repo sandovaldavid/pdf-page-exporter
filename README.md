@@ -122,6 +122,10 @@ Package for distribution/store:
 ./scripts/package-extension.sh
 ```
 
+Releases are automated with release-please. Merging the release PR it opens
+bumps the version in `version.txt` and `manifest.json`, updates `CHANGELOG.md`
+and creates the Git tag and GitHub release.
+
 Check the website before touching `website/`:
 
 ```bash
