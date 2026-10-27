@@ -1,0 +1,31 @@
+name: Website checks
+
+on:
+  pull_request:
+    paths:
+      - "website/**"
+      - ".github/scripts/check-website.py"
+      - ".github/workflows/website-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check static site
+        run: python3 .github/scripts/check-website.py
+      - name: Upload preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-preview
+          path: website
+          retention-days: 7
+      - name: Explain preview
+        run: |
+          echo "Download the website-preview artifact and open index.html." >> "$GITHUB_STEP_SUMMARY"
+          echo "This is a downloadable preview, not a public URL." >> "$GITHUB_STEP_SUMMARY"
