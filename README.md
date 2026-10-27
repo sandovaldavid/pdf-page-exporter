@@ -1,5 +1,7 @@
 # PDF Page Exporter
 
+[![Release](https://img.shields.io/github/v/release/sandovaldavid/pdf-page-exporter?color=0A5CD6)](https://github.com/sandovaldavid/pdf-page-exporter/releases)
+
 Chrome extension (Manifest V3) that exports the pages of a document that the
 Google Drive/Docs viewer **has already rendered on screen** as a downloadable
 PDF. It does not decrypt anything or bypass any protection: it only reads
@@ -14,6 +16,9 @@ technical decisions. See `CHROMEWEBSTORE.md` for the store listing.
 
 ## Current status
 
+<!-- x-release-please-start-version -->
+Latest release: **v0.1.0** (see [GitHub Releases](https://github.com/sandovaldavid/pdf-page-exporter/releases/latest) and [`CHANGELOG.md`](CHANGELOG.md)).
+
 v0.1.0 implementation verified end to end against 4 real PDF documents (3, 7,
 12 and 194 pages) in the 2 variants of the Google viewer
 (`docs.google.com/viewer` and `drive.google.com/file/d/…/view`), including a
@@ -22,6 +27,7 @@ real click on "Exportar PDF" ("Export PDF"). The E2E suite (`test/run.sh`) runs
 30 browser checks and verifies the PDFs with `pdfinfo`/`pdftoppm`. See
 `docs/selectors.md` for the full detail and what still needs testing (a
 document that requires a signed-in session, mixed page sizes).
+<!-- x-release-please-end -->
 
 ## Known limitations
 
