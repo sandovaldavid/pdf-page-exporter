@@ -77,7 +77,7 @@ async page => {
     return { p, tab };
   };
 
-  const openPopup = async (tab, breakServiceWorker) => {
+  const openPopup = async (tab, breakServiceWorker, waitForForm = true) => {
     await context.addInitScript(({ t, brk }) => {
       if (!location.protocol.startsWith('chrome-extension')) return;
       const real = chrome.tabs.query.bind(chrome.tabs);
@@ -96,7 +96,9 @@ async page => {
     const pop = await context.newPage();
     pop.setDefaultTimeout(240000);
     await pop.goto(`chrome-extension://${extensionId}/src/popup/popup.html`);
-    await pop.waitForFunction(() => !document.getElementById('exportForm').hidden);
+    if (waitForForm) {
+      await pop.waitForFunction(() => !document.getElementById('exportForm').hidden);
+    }
     return pop;
   };
 
@@ -143,6 +145,20 @@ async page => {
       state.status === 'done' && state.capturedPages === 20 &&
       state.expectedPageCount === 20 && state.tabId === tab.id, JSON.stringify(state));
     check('badge shows OK', (await sw.evaluate(() => chrome.action.getBadgeText({}))) === 'OK');
+
+    // Reusing the same tab for another document used to leave the popup pinned
+    // to the previous result forever: the stored state has the same tabId and
+    // there was no way back to the form. The result view must offer a reset.
+    const pop2 = await openPopup(tab, false, false);
+    await pop2.waitForFunction(() => !document.getElementById('resultState').hidden);
+    check('reopening on the same tab shows the completed result',
+      (await pop2.evaluate(() => document.getElementById('resultText').textContent)) === 'PDF descargado: 20 páginas',
+      await pop2.evaluate(() => document.getElementById('resultText').textContent));
+    await pop2.click('#resetBtn');
+    await pop2.waitForFunction(() => !document.getElementById('exportForm').hidden);
+    check('reset returns to the form and clears the stored result',
+      (await sw.evaluate(async () => (await chrome.storage.session.get('dpuExportState')).dpuExportState)) === undefined,
+      JSON.stringify(await sw.evaluate(async () => (await chrome.storage.session.get('dpuExportState')).dpuExportState)));
 
     // Finding #9: jsPDF (420 KB) must reach only the frames that hold pages.
     const frames = await sw.evaluate(async (tabId) => {

@@ -10,28 +10,12 @@ OUTPUT="${EXTENSION_NAME}-v${VERSION}.zip"
 
 rm -f "$OUTPUT"
 
-zip -r "$OUTPUT" . \
-  -x "*.zip" \
-  -x ".git/*" \
-  -x ".github/*" \
-  -x ".agents/*" \
-  -x ".claude/*" \
-  -x "node_modules/*" \
-  -x ".env" \
-  -x "*.map" \
-  -x "test/*" \
-  -x "docs/*" \
-  -x "store-assets/*" \
-  -x "scripts/*" \
-  -x "icons/icon.svg" \
-  -x "PLAN.md" \
-  -x "CHROMEWEBSTORE.md" \
-  -x "README.md" \
-  -x ".gitignore" \
-  -x ".mcp.json" \
-  -x "CLAUDE.md" \
-  -x "skills-lock.json" \
-  -x ".DS_Store" \
-  -x "Thumbs.db"
+# Allowlist: only runtime files can ever reach the store package. A denylist
+# let tool scratch directories (e.g. .playwright-mcp/) ship to users.
+zip -r "$OUTPUT" \
+  manifest.json \
+  icons/icon-16.png icons/icon-48.png icons/icon-128.png \
+  assets \
+  src
 
 echo "Packaged: $OUTPUT ($(du -h "$OUTPUT" | cut -f1))"
