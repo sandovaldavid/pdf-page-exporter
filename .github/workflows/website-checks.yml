@@ -2,10 +2,6 @@ name: Website checks
 
 on:
   pull_request:
-    paths:
-      - "website/**"
-      - ".github/scripts/check-website.py"
-      - ".github/workflows/website-checks.yml"
   workflow_dispatch:
 
 permissions:
