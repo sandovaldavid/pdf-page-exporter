@@ -1,61 +1,61 @@
-# David Sandoval — Identity System
+# David Sandoval: Identity System
 
-> Snapshot técnico extraído del archivo de Figma **Identity System** el 2026-07-27.  
-> Figma file key: `sHPP8DGCfZ370Oc2oKGNPH`  
-> Versión visible en portada: `v1.0` · actualización indicada en Figma: `2026-07-26`.
+> Technical snapshot extracted from the **Identity System** Figma file on 2026-07-27.
+> Figma file key: `sHPP8DGCfZ370Oc2oKGNPH`
+> Version shown on the cover: `v1.0` · update noted in Figma: `2026-07-26`.
 
-## 1. Propósito y jerarquía
+## 1. Purpose and hierarchy
 
-David Sandoval es la marca. El rostro, nombre, voz, trabajo y evidencia profesional tienen prioridad sobre el logotipo y cualquier recurso editorial.
+David Sandoval is the brand. His face, name, voice, work and professional evidence take priority over the logo and any editorial asset.
 
-Orden de identidad:
+Identity order:
 
-1. David Sandoval como persona.
-2. David como Software Engineer.
-3. Trabajo y evidencia profesional.
-4. Voz, valores y aprendizaje.
-5. Nombre y logotipo.
-6. Sistema visual.
-7. Recursos editoriales secundarios.
+1. David Sandoval as a person.
+2. David as a Software Engineer.
+3. Work and professional evidence.
+4. Voice, values and learning.
+5. Name and logo.
+6. Visual system.
+7. Secondary editorial assets.
 
-Principios expresados en la portada:
+Principles stated on the cover:
 
 - `CLARITY`
 - `PRECISION`
 - `TRUST`
 - Human-first identity.
-- El retrato real es la identidad primaria.
-- El isotype es una firma secundaria de apoyo.
+- The real portrait is the primary identity.
+- The isotype is a secondary support signature.
 
-## 2. Recomendación para la Chrome Extension
+## 2. Recommendation for the Chrome Extension
 
-Usa como base el tema **Professional / Light + Dark** o **Link Hub / Light + Dark**:
+Use the **Professional / Light + Dark** or **Link Hub / Light + Dark** theme as the base:
 
 - Headings: `JetBrains Mono`.
 - Body: `Inter`.
 - Technical text: `JetBrains Mono`.
-- Primary blue: `#0A5CD6` en Light y `#00B0FF` en Dark.
-- Canvas: `#F5F8FC` en Light y `#020408` en Dark.
-- Surface: `#FFFFFF` en Light y `#0A0D14` en Dark.
-- Avoid convertir la extensión en una estética gamer, hacker o cyberpunk.
-- Las fuentes retro (`Press Start 2P`, `VT323`, `Share Tech Mono`) pertenecen al **Portfolio Retro theme** y no deben utilizarse como identidad general salvo que la extensión esté directamente vinculada al portfolio.
+- Primary blue: `#0A5CD6` in Light and `#00B0FF` in Dark.
+- Canvas: `#F5F8FC` in Light and `#020408` in Dark.
+- Surface: `#FFFFFF` in Light and `#0A0D14` in Dark.
+- Avoid turning the extension into a gamer, hacker or cyberpunk aesthetic.
+- The retro fonts (`Press Start 2P`, `VT323`, `Share Tech Mono`) belong to the **Portfolio Retro theme** and must not be used as the general identity unless the extension is directly tied to the portfolio.
 
 ## 3. Font families
 
-| Token | Family | Rol |
+| Token | Family | Role |
 | --- | --- | --- |
-| font/family/body | Inter | Lectura principal y UI profesional. |
-| font/family/heading | JetBrains Mono | Headings y títulos técnicos. |
-| font/family/code | JetBrains Mono | Código y contenido técnico actual. |
-| font/family/legacy-code | Fira Code | Estilo local `Code / Body`; mantener por compatibilidad hasta migración explícita. |
-| font/family/editorial | Silkscreen | Labels decorativos y kickers; uso limitado. |
-| font/family/theme/portfolio/display | Press Start 2P | Display retro exclusivo del portfolio. |
-| font/family/theme/portfolio/technical-mono | Share Tech Mono | Metadata técnica del portfolio. |
-| font/family/theme/portfolio/terminal | VT323 | Terminal/HUD del portfolio. |
+| font/family/body | Inter | Primary reading and professional UI. |
+| font/family/heading | JetBrains Mono | Headings and technical titles. |
+| font/family/code | JetBrains Mono | Code and current technical content. |
+| font/family/legacy-code | Fira Code | Local `Code / Body` style; keep for compatibility until an explicit migration. |
+| font/family/editorial | Silkscreen | Decorative labels and kickers; limited use. |
+| font/family/theme/portfolio/display | Press Start 2P | Retro display exclusive to the portfolio. |
+| font/family/theme/portfolio/technical-mono | Share Tech Mono | Portfolio technical metadata. |
+| font/family/theme/portfolio/terminal | VT323 | Portfolio terminal/HUD. |
 
-### Implementación de fonts en Chrome Extension
+### Font implementation in the Chrome Extension
 
-Para eliminar dependencias externas, simplificar CSP y mejorar confiabilidad offline, empaqueta archivos webfont autorizados dentro de la extensión y decláralos mediante `@font-face`. Mantén fallbacks:
+To remove external dependencies, simplify CSP and improve offline reliability, package approved webfont files inside the extension and declare them with `@font-face`. Keep fallbacks:
 
 ```css
 --font-body: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -129,7 +129,7 @@ Para eliminar dependencias externas, simplificar CSP y mejorar confiabilidad off
 
 ## 6. Internal documentation text styles
 
-Estos estilos pertenecen a la documentación del Identity System. No deben convertirse automáticamente en estilos públicos de la extensión.
+These styles belong to the Identity System documentation. They must not automatically become public styles of the extension.
 
 | Style | Family | Weight | Size | Line height | Tracking | Case | Usage |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -167,9 +167,9 @@ Estos estilos pertenecen a la documentación del Identity System. No deben conve
 
 ## 7. Primitive colors
 
-La autoría canónica de color está expresada en `oklch()`. Figma conserva una representación sRGB equivalente. En producción, prioriza OKLCH y conserva Hex como fallback o referencia de interoperabilidad.
+Canonical color authoring is expressed in `oklch()`. Figma keeps an equivalent sRGB representation. In production, prefer OKLCH and keep Hex as a fallback or interoperability reference.
 
-Los valores Alpha usan Hex de 8 dígitos en formato `#RRGGBBAA`.
+Alpha values use 8-digit Hex in `#RRGGBBAA` format.
 
 | Token | Canonical OKLCH | sRGB reference |
 | --- | --- | --- |
@@ -234,7 +234,7 @@ Los valores Alpha usan Hex de 8 dígitos en formato `#RRGGBBAA`.
 
 ## 8. Semantic colors
 
-Consume estos tokens en componentes. No uses primitives directamente salvo al definir aliases.
+Consume these tokens in components. Do not use primitives directly except when defining aliases.
 
 | Semantic token | Light | Dark |
 | --- | --- | --- |
@@ -274,7 +274,7 @@ Consume estos tokens en componentes. No uses primitives directamente salvo al de
 
 ### Shared visual tokens
 
-Actualmente Portfolio, Link Hub y Professional resuelven los siguientes tokens visuales al mismo valor dentro de cada mode. La diferencia principal entre canales está en typography.
+Portfolio, Link Hub and Professional currently resolve the following visual tokens to the same value within each mode. The main difference between channels is typography.
 
 | Channel token | Light | Dark |
 | --- | --- | --- |
@@ -300,7 +300,7 @@ Actualmente Portfolio, Link Hub y Professional resuelven los siguientes tokens v
 
 ### Portfolio terminal tokens
 
-Aunque estos tokens existen en los seis Figma modes, su scope nominal es Portfolio.
+Although these tokens exist in all six Figma modes, their nominal scope is Portfolio.
 
 | Token | Resolved value |
 | --- | --- |
@@ -314,7 +314,7 @@ Aunque estos tokens existen en los seis Figma modes, su scope nominal es Portfol
 
 ## 10. Dimensions
 
-Todas las dimensiones son píxeles salvo que se indique otra unidad.
+All dimensions are pixels unless another unit is stated.
 
 | Primitive token | Value |
 | --- | --- |
@@ -387,7 +387,7 @@ Todas las dimensiones son píxeles salvo que se indique otra unidad.
 
 ## 14. Effect styles
 
-No existen Paint Styles ni Grid Styles locales en el snapshot. Los colores se administran mediante variables. Existen nueve Effect Styles:
+There are no local Paint Styles or Grid Styles in the snapshot. Colors are managed through variables. There are nine Effect Styles:
 
 | Style | Type | Offset X | Offset Y | Blur | Color token | Usage |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -403,7 +403,7 @@ No existen Paint Styles ni Grid Styles locales en el snapshot. Los colores se ad
 
 ## 15. Logo geometry
 
-La geometría maestra está definida sobre un grid de `512 × 512`.
+The master geometry is defined on a `512 × 512` grid.
 
 | Token | Value |
 | --- | --- |
@@ -420,12 +420,12 @@ La geometría maestra está definida sobre un grid de `512 × 512`.
 
 ### Logo construction rules
 
-- El isotype canónico representa el concepto **Confianza técnica**.
-- La slash es una sola silueta continua con un segmento cyan integrado mediante clipping.
-- No recrear el acento como una slash corta separada.
-- Conservar la geometría maestra de 512 px y el clear space.
-- Tamaño mínimo digital: `24 px`.
-- Tamaño mínimo de impresión: `8 mm`.
+- The canonical isotype represents the **Confianza técnica** (technical trust) concept.
+- The slash is a single continuous silhouette with a cyan segment integrated through clipping.
+- Do not recreate the accent as a separate short slash.
+- Keep the 512 px master geometry and the clear space.
+- Minimum digital size: `24 px`.
+- Minimum print size: `8 mm`.
 
 ## 16. Logo components
 
@@ -458,9 +458,9 @@ Properties:
 
 Rules:
 
-- Es un mark para repositorios, aplicaciones y project identities.
-- No está aprobado como avatar personal principal de David.
-- Para perfiles personales, usar `Identity / Portrait`.
+- It is a mark for repositories, applications and project identities.
+- It is not approved as David's primary personal avatar.
+- For personal profiles, use `Identity / Portrait`.
 
 Variants:
 
@@ -480,10 +480,10 @@ Properties:
 
 Rules:
 
-- Son pixel masters reales.
-- Exportar a `1×`.
-- No redimensionar un raster exportado para producir otro tamaño.
-- Para Chrome Extension, exportar cada tamaño desde su variant correspondiente.
+- They are real pixel masters.
+- Export at `1×`.
+- Do not resize an exported raster to produce another size.
+- For the Chrome Extension, export each size from its corresponding variant.
 
 Variants:
 
@@ -506,8 +506,8 @@ Rules:
 
 - Light: opacity `8%`.
 - Dark: opacity `10%`.
-- No sobrescribir opacity en la instancia.
-- No reducir manualmente por debajo de los valores aprobados.
+- Do not override opacity on the instance.
+- Do not manually reduce below the approved values.
 
 Variants:
 
@@ -542,7 +542,7 @@ Variants:
 
 ### Chrome Extension icon mapping
 
-Para Manifest V3, la documentación oficial de Chrome recomienda declarar íconos raster cuadrados de `16`, `32`, `48` y `128` px. `128` se usa durante instalación y en Chrome Web Store; `48` se usa en `chrome://extensions`; `16` puede funcionar como favicon de páginas de la extensión. PNG es el formato recomendado y los íconos SVG o WebP no están soportados en el manifest. Usa masters independientes, no escalados desde otro raster:
+For Manifest V3, the official Chrome documentation recommends declaring square raster icons of `16`, `32`, `48` and `128` px. `128` is used during installation and in the Chrome Web Store; `48` is used in `chrome://extensions`; `16` can work as the favicon for extension pages. PNG is the recommended format and SVG or WebP icons are not supported in the manifest. Use independent masters, not scaled from another raster:
 
 ```json
 {
@@ -562,7 +562,7 @@ Para Manifest V3, la documentación oficial de Chrome recomienda declarar ícono
 }
 ```
 
-Figma contiene masters explícitos para `16`, `32` y `64`. Los tamaños `48` y `128` existen como export tokens, pero no aparecen como variants dentro de `Logo / Favicon`; deben exportarse desde el source vector o incorporarse como variants antes de tratarlos como pixel masters aprobados.
+Figma contains explicit masters for `16`, `32` and `64`. The `48` and `128` sizes exist as export tokens but do not appear as variants inside `Logo / Favicon`; they must be exported from the source vector or added as variants before treating them as approved pixel masters.
 
 ## 18. CSS starter for the extension
 
@@ -654,7 +654,7 @@ button[data-variant="primary"] {
 
 ### Explicit application theme override
 
-Cuando la extensión permita seleccionar tema independientemente del sistema operativo:
+When the extension allows selecting a theme independently of the operating system:
 
 ```css
 :root[data-theme="light"] {
@@ -663,21 +663,21 @@ Cuando la extensión permita seleccionar tema independientemente del sistema ope
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  /* Repetir o importar el bloque de aliases Dark. */
+  /* Repeat or import the Dark aliases block. */
 }
 ```
 
 ## 19. Accessibility and implementation constraints
 
-- Validar contrast ratios en Light y Dark antes de publicar.
-- `Web / Body` tiene floor de `16 px`.
-- `Web / Caption` tiene floor absoluto de `12 px`.
-- No utilizar `Silkscreen`, `Press Start 2P` o `VT323` para lectura extensa.
-- No sustituir el nombre o retrato de David por el isotype en contextos personales.
-- Usar semantic tokens dentro de components; primitives solo en definitions.
-- Evitar hardcoded colors fuera del archivo central de tokens.
-- Respetar `prefers-reduced-motion` al implementar glow, transitions o cualquier futura motion rule.
-- Los effect styles Retro pertenecen al lenguaje del portfolio, no a toda la marca.
+- Validate contrast ratios in Light and Dark before publishing.
+- `Web / Body` has a floor of `16 px`.
+- `Web / Caption` has an absolute floor of `12 px`.
+- Do not use `Silkscreen`, `Press Start 2P` or `VT323` for long-form reading.
+- Do not replace David's name or portrait with the isotype in personal contexts.
+- Use semantic tokens inside components; primitives only in definitions.
+- Avoid hardcoded colors outside the central token file.
+- Respect `prefers-reduced-motion` when implementing glow, transitions or any future motion rule.
+- The Retro effect styles belong to the portfolio language, not the whole brand.
 
 ## 20. Suggested extension token architecture
 
@@ -725,7 +725,7 @@ primitives
 - The Markdown does not embed the portrait or logo binaries.
 - Export the approved logo and favicon assets directly from their Figma nodes.
 - Figma exposes favicon variants for 16, 32 and 64 px; 48 and 128 require source-vector export or new approved pixel-master variants.
-- El documento asume Manifest V3, que es la versión actual aceptada por Chrome Web Store. Valida cada superficie (`icons`, `action`, side panel, options, etc.) contra la documentación oficial.
+- The document assumes Manifest V3, which is the current version accepted by the Chrome Web Store. Validate each surface (`icons`, `action`, side panel, options, etc.) against the official documentation.
 
 ## 22. Source responsibility
 
