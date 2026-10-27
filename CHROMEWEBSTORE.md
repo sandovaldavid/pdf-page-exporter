@@ -3,9 +3,9 @@
 > Last Updated: 2026-10-26
 > **Estado: paquete validado; ficha aún no publicable.** El ZIP de v0.1.0 se genera
 > y valida (manifest, iconos, rutas y código remoto comprobados), y ya existe la
-> captura obligatoria. Faltan la política de privacidad publicada y confirmar
-> publisher, contacto y visibilidad. La verificación con sesión de Google iniciada
-> sigue pendiente; ver "Submission Readiness" al final.
+> captura obligatoria. Faltan confirmar publisher, contacto y visibilidad. La
+> verificación con sesión de Google iniciada sigue pendiente; ver "Submission
+> Readiness" al final.
 
 ## Store Listing
 
@@ -128,11 +128,11 @@ La FAQ de User Data de Chrome Web Store considera manejo de datos el hecho de ca
 
 `https://sandovaldavid.github.io/pdf-page-exporter/privacy.html`
 
-El texto ya existe en `docs/privacy.html` y describe el procesamiento local y los
-permisos. ⚠️ **Aún no está publicado:** verificado el 2026-10-26, el repositorio
-tiene `has_pages=false` y la URL devuelve 404. Antes de enviar: habilitar GitHub
-Pages con origen en `/docs`, visitar la URL y confirmar que carga. Un 404 aquí
-es rechazo inmediato.
+La política estará disponible en inglés en esa URL y en español en
+`https://sandovaldavid.github.io/pdf-page-exporter/es/privacy.html` cuando se
+ejecute el flujo `Deploy website`. El texto vive en `website/privacy.html` y
+`website/es/privacy.html`; el flujo `Deploy website` de GitHub Actions publica
+únicamente `website/`. La URL no depende de `/docs`.
 
 ## Distribution
 
@@ -170,7 +170,7 @@ https://github.com/sandovaldavid/pdf-page-exporter
 | Permissions minimal | Passed | `scripting`, `storage`, two Google host permissions |
 | Store icon 128×128 | Passed | valid RGBA PNG |
 | At least one required screenshot | Passed | `store-assets/store-1.png`, 1280×800 |
-| Privacy policy URL live | **Failed** | `has_pages=false`; URL returns 404 |
+| Privacy policy URL live | **Not run** | `website/privacy.html` and `website/es/privacy.html` ready; `Deploy website` not run, so the live URL is not verified |
 | Publisher, contact, visibility | **Blocked** | decisions pending |
 | Real landscape document (7 pages) | Passed | 7/7 pages, 800×565 pt, all landscape, non-blank, unique |
 | Real 194-page document (RFC 9110) | Passed | 194/194 pages, 800×1131 pt, portrait, non-blank, unique; 8m19s |

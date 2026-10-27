@@ -62,8 +62,15 @@ el documento.
 
 La extensión procesa las imágenes de las páginas localmente y no las envía a
 ningún servidor: no hay analítica, telemetría ni `storage.sync`. La política
-completa está en `docs/privacy.html`; para la ficha de la tienda se publica en
-GitHub Pages (pendiente de habilitar, ver `CHROMEWEBSTORE.md`).
+completa está en `website/privacy.html`, con una versión en español en
+`website/es/privacy.html`. El sitio bilingüe vive en `website/` y se publica
+con el flujo `Deploy website` de GitHub Actions, que requiere que el origen de
+GitHub Pages esté configurado como GitHub Actions. Cuando ese flujo se ejecute,
+el sitio quedará en https://sandovaldavid.github.io/pdf-page-exporter/ (inglés)
+y https://sandovaldavid.github.io/pdf-page-exporter/es/ (español), y las
+políticas en https://sandovaldavid.github.io/pdf-page-exporter/privacy.html y
+https://sandovaldavid.github.io/pdf-page-exporter/es/privacy.html. Mientras el
+origen siga apuntando a `docs/`, esas URLs muestran la versión anterior.
 
 ## Estructura del proyecto
 
@@ -86,8 +93,15 @@ icons/                      icon.svg (fuente) + PNG generados en 16/48/128px
 scripts/
   generate-icons.sh         Rasteriza icons/icon.svg a los tres tamaños (requiere ImageMagick)
   package-extension.sh      Genera el ZIP de distribución/tienda
+website/                    Sitio público bilingüe (inglés en /, español en /es/)
+  index.html                Portada en inglés
+  privacy.html              Política de privacidad en inglés
+  es/                       Portada y política en español
+  site.css                  Estilos compartidos por ambos idiomas
+  assets/                   Icono y fuentes web del sitio
+.github/workflows/pages.yml Publica únicamente website/ en GitHub Pages
 docs/selectors.md           Estado de verificación de los selectores del visor
-docs/privacy.html           Política de privacidad para la ficha de la tienda
+docs/design-system.md       Fuente de verdad de la identidad visual
 ```
 
 ## Desarrollo
