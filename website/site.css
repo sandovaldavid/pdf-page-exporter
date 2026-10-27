@@ -1,6 +1,6 @@
-/* PDF Page Exporter — public site.
-   GitHub Pages publishes only /docs, so the fonts and icon are copied into
-   docs/assets instead of reaching outside the published root. */
+/* PDF Page Exporter public site.
+   One stylesheet serves the English site at / and the Spanish site at /es/.
+   Font URLs resolve relative to this file, so they work from both locales. */
 
 @font-face {
   font-family: "Inter";
@@ -36,6 +36,7 @@
   --primary-soft: rgba(10, 92, 214, 0.08);
   --on-primary: #ffffff;
   --success: #065f46;
+  --check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.6 5.9 4.8 8.1 9.4 3.5' fill='none' stroke='%230a5cd6' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --shadow: 0 24px 64px -32px rgba(15, 23, 42, 0.32);
 
   --mock-chrome: #202124;
@@ -63,6 +64,7 @@
     --primary-soft: rgba(0, 176, 255, 0.08);
     --on-primary: #020408;
     --success: #34d399;
+    --check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.6 5.9 4.8 8.1 9.4 3.5' fill='none' stroke='%2300b0ff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --shadow: 0 24px 64px -32px rgba(0, 0, 0, 0.7);
     --mock-chrome: #0b0f16;
     --mock-doc: #111823;
@@ -113,6 +115,10 @@ a:hover {
   border-radius: 4px;
 }
 
+main:focus {
+  outline: none;
+}
+
 .skip-link {
   position: absolute;
   left: -999px;
@@ -156,6 +162,7 @@ a:hover {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+  min-height: 44px;
   color: var(--text);
   text-decoration: none;
 }
@@ -189,16 +196,25 @@ a:hover {
   margin-left: auto;
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
   gap: 24px;
 }
 
-.nav a {
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 14px;
   color: var(--body);
   text-decoration: none;
 }
 
-.nav a:hover {
+.nav-links a:hover {
   color: var(--primary);
 }
 
@@ -208,6 +224,53 @@ a:hover {
 
 .nav .button:hover {
   color: var(--on-primary);
+}
+
+.lang-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 2px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.lang-switch a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 7px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.lang-switch a:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.lang-switch a[aria-current="page"] {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.lang-switch a[aria-current="page"]:hover {
+  background: var(--primary-strong);
+  color: var(--on-primary);
+}
+
+.lang-switch a:focus-visible {
+  outline-color: var(--text);
+  outline-offset: 2px;
 }
 
 .button {
@@ -346,7 +409,6 @@ h2 {
 .section {
   padding: 84px 0;
   border-top: 1px solid var(--edge);
-  scroll-margin-top: 72px;
 }
 
 .section-head {
@@ -469,6 +531,7 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 32px;
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
@@ -491,31 +554,25 @@ h2 {
 
 .check-list li {
   position: relative;
+  min-width: 0;
   padding-left: 28px;
+  line-height: 1.625;
 }
 
 .check-list li::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 0.28em;
-  width: 16px;
-  height: 16px;
+  top: calc((1lh - 18px) / 2);
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: var(--primary-soft);
+  background-color: var(--primary-soft);
+  background-image: var(--check-icon);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 12px 12px;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent);
-}
-
-.check-list li::after {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 0.58em;
-  width: 6px;
-  height: 3px;
-  border-left: 2px solid var(--primary);
-  border-bottom: 2px solid var(--primary);
-  transform: rotate(-45deg);
 }
 
 .limits {
@@ -607,6 +664,8 @@ h2 {
   padding: 12px 14px;
   max-width: 100%;
   overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   border: 1px solid var(--edge);
   border-radius: var(--radius-control);
   background: var(--surface);
@@ -666,6 +725,7 @@ code {
   font-family: var(--font-mono);
   font-size: 0.9em;
   color: var(--text);
+  overflow-wrap: anywhere;
 }
 
 pre code {
@@ -702,6 +762,9 @@ pre code {
 }
 
 .footer-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
   color: var(--body);
   text-decoration: none;
 }
@@ -716,6 +779,137 @@ pre code {
   font-size: 12px;
   line-height: 1.6;
   color: var(--muted);
+}
+
+/* Privacy policy */
+.policy-main {
+  padding: 68px 0 88px;
+}
+
+.policy-layout {
+  display: grid;
+  grid-template-columns: minmax(190px, 230px) minmax(0, 760px);
+  gap: clamp(32px, 6vw, 88px);
+  align-items: start;
+  justify-content: space-between;
+}
+
+.policy-toc {
+  position: sticky;
+  top: 96px;
+  min-width: 0;
+}
+
+.policy-toc .eyebrow {
+  margin-bottom: 14px;
+}
+
+.policy-toc ol {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.policy-toc a {
+  display: inline-block;
+  min-height: 28px;
+  padding: 3px 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.policy-toc a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.policy {
+  min-width: 0;
+  max-width: 68ch;
+}
+
+.policy h1 {
+  margin-bottom: 12px;
+  font-size: clamp(34px, 4.2vw, 52px);
+}
+
+.policy-meta {
+  margin: 0 0 28px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.policy-intro {
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.policy-section {
+  margin-top: 36px;
+  padding-top: 32px;
+  border-top: 1px solid var(--edge);
+}
+
+.policy-section h2 {
+  margin-bottom: 12px;
+  font-size: clamp(21px, 2.4vw, 27px);
+  letter-spacing: -0.025em;
+  line-height: 1.3;
+}
+
+.policy p {
+  margin: 0 0 14px;
+}
+
+.policy p:last-child,
+.policy ul:last-child,
+.policy ol:last-child {
+  margin-bottom: 0;
+}
+
+.policy ul,
+.policy ol {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding-left: 1.3rem;
+}
+
+.policy li {
+  min-width: 0;
+}
+
+.policy li::marker {
+  color: var(--primary);
+}
+
+.policy strong {
+  color: var(--text);
+}
+
+.policy code {
+  overflow-wrap: anywhere;
+}
+
+.policy a {
+  overflow-wrap: anywhere;
+}
+
+.policy-scope {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-left: 3px solid var(--primary);
+  background: var(--primary-soft);
+  font-size: 14px;
+  color: var(--body);
 }
 
 /* Product mockup: decorative, kept in CSS so the page has no screenshot
@@ -940,6 +1134,36 @@ pre code {
   .steps {
     gap: 20px;
   }
+
+  .site-header .wrap {
+    gap: 16px;
+  }
+
+  .policy-main {
+    padding: 48px 0 64px;
+  }
+
+  .policy-layout {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .policy-toc {
+    position: static;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--edge);
+  }
+
+  .policy-toc ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 32px;
+  }
+}
+
+@media (max-width: 840px) {
+  .nav-links {
+    display: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -949,15 +1173,11 @@ pre code {
 
   .site-header .wrap {
     min-height: 64px;
-    gap: 12px;
+    gap: 10px;
   }
 
   .nav {
-    gap: 12px;
-  }
-
-  .nav a:not(.button) {
-    display: none;
+    gap: 10px;
   }
 
   .brand-tag {
@@ -998,7 +1218,57 @@ pre code {
   }
 }
 
+@media (max-width: 600px) {
+  .policy-toc ol {
+    grid-template-columns: 1fr;
+  }
+
+  .policy-intro {
+    font-size: 17px;
+  }
+}
+
 @media (max-width: 480px) {
+  .wrap {
+    width: calc(100% - 24px);
+  }
+
+  .site-header .wrap {
+    min-height: 60px;
+    gap: 6px;
+  }
+
+  .brand {
+    gap: 7px;
+  }
+
+  .brand img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .brand-name {
+    font-size: 11px;
+    letter-spacing: -0.035em;
+  }
+
+  .nav {
+    gap: 6px;
+  }
+
+  .lang-switch a {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0 5px;
+  }
+
+  .nav .button {
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+
   .hero-actions .button {
     width: 100%;
   }
@@ -1011,6 +1281,19 @@ pre code {
   .limits {
     grid-template-columns: 1fr;
   }
+
+  .policy-main {
+    padding: 36px 0 56px;
+  }
+
+  .policy-section {
+    margin-top: 30px;
+    padding-top: 26px;
+  }
+
+  .policy-scope {
+    padding: 14px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1019,7 +1302,8 @@ pre code {
   }
 
   .button,
-  .feature {
+  .feature,
+  .lang-switch a {
     transition: none;
   }
 }
