@@ -1,57 +1,105 @@
-# David Sandoval: Identity System
+# PDF Page Exporter design system
 
-> Technical snapshot extracted from the **Identity System** Figma file on 2026-07-27.
-> Figma file key: `sHPP8DGCfZ370Oc2oKGNPH`
-> Version shown on the cover: `v1.0` · update noted in Figma: `2026-07-26`.
+Specification for the interface of PDF Page Exporter, a public Manifest V3 Chrome extension. The extension exports the pages of a document that the Google Drive viewer has already rendered as a PDF. Processing stays in the browser.
+
+This document defines the extension's own palette, typography, dimensions, icon and interface rules. It is a specification, not a collection of references to another brand.
 
 ## 1. Purpose and hierarchy
 
-David Sandoval is the brand. His face, name, voice, work and professional evidence take priority over the logo and any editorial asset.
+The document pages are the content. The popup exists to start, report and finish an export. It must not compete with the document for attention.
 
-Identity order:
+Interface order:
 
-1. David Sandoval as a person.
-2. David as a Software Engineer.
-3. Work and professional evidence.
-4. Voice, values and learning.
-5. Name and logo.
-6. Visual system.
-7. Secondary editorial assets.
+1. The document pages in the viewer.
+2. The export action and its current state.
+3. The filename, quality and automatic scrolling controls.
+4. Progress and result feedback.
+5. The extension icon at browser scale.
+6. Decorative and editorial assets.
 
-Principles stated on the cover:
+Rules:
 
-- `CLARITY`
-- `PRECISION`
-- `TRUST`
-- Human-first identity.
-- The real portrait is the primary identity.
-- The isotype is a secondary support signature.
+- The popup stays quiet and legible at 320 px wide.
+- One primary action per state.
+- Neutral surfaces keep the interface from adding a color cast to the document.
+- No element suggests a capability the extension does not have.
 
-## 2. Recommendation for the Chrome Extension
+## 2. Principles
 
-Use the **Professional / Light + Dark** or **Link Hub / Light + Dark** theme as the base:
+| Principle | What it means here |
+| --- | --- |
+| CLARITY | The popup shows one state at a time: no document, ready, exporting, done or error. Each state has one primary action or none. |
+| PRECISION | Labels, page counts and progress describe the document and the exported file. No invented page count and no quality claim the capture cannot meet. |
+| TRUST | Processing stays in the browser, progress is honest, and a failure never looks like a success. |
 
-- Headings: `JetBrains Mono`.
-- Body: `Inter`.
-- Technical text: `JetBrains Mono`.
-- Primary blue: `#0A5CD6` in Light and `#00B0FF` in Dark.
-- Canvas: `#F5F8FC` in Light and `#020408` in Dark.
-- Surface: `#FFFFFF` in Light and `#0A0D14` in Dark.
-- Avoid turning the extension into a gamer, hacker or cyberpunk aesthetic.
-- The retro fonts (`Press Start 2P`, `VT323`, `Share Tech Mono`) belong to the **Portfolio Retro theme** and must not be used as the general identity unless the extension is directly tied to the portfolio.
+The footer states: "Todo el procesamiento ocurre en tu navegador. No se envía ningún dato." (All processing happens in your browser. No data is sent.)
 
-## 3. Font families
+## 3. Popup states
+
+| State | What the popup shows | Primary action |
+| --- | --- | --- |
+| No document | "Abre un documento en el visor de Google Drive y vuelve a abrir esta ventana." (Open a document in the Google Drive viewer and open this window again.) | None |
+| Ready | Filename, quality, automatic scrolling and the footer. | "Exportar PDF" (Export PDF) |
+| Exporting | Progress bar and status line. The form is hidden. | None |
+| Done | Success result and the reset action. | "Exportar otro PDF" (Export another PDF) |
+| Error | Error result and the reset action. | "Exportar otro PDF" (Export another PDF) |
+
+The ready form labels are "Nombre del archivo" (File name), "Calidad" (Quality) and "Recorrer el documento automáticamente" (Scroll through the document automatically).
+
+## 4. Source of truth and scope
+
+This document is the specification for the design system. `src/styles/tokens.css` is the CSS implementation. Change the specification and the stylesheet together; do not treat a component stylesheet as a third source.
+
+`docs/selectors.md` is separate evidence about the Google viewer selectors. It is not part of this document and does not define visual rules.
+
+In scope:
+
+- The popup at 320 px wide.
+- The extension icon at 16, 48 and 128 px.
+- The token definitions, typography, dimensions and accessibility rules used by the popup and product pages.
+
+Out of scope:
+
+- The rendered pages inside the Google viewer.
+- The appearance of the exported PDF beyond the captured page images.
+- The Chrome Web Store listing and the text of the public website.
+
+## 5. Palette and product reasoning
+
+The palette is the extension's official palette. Provenance: the palette started from the author's identity system and is maintained here as the extension's own tokens.
+
+The palette has one job: keep the document readable while making the export action unmistakable.
+
+| Role | Token | Light | Dark |
+| --- | --- | --- | --- |
+| Canvas | background/default | #F5F8FC | #020408 |
+| Popup surface | surface/default | #FFFFFF | #0A0D14 |
+| Primary action | brand/primary/500 | #0A5CD6 | #00B0FF |
+| Primary hover | brand/primary/600 | #0044CC | #0080FF |
+| Body text | content/default | #334155 | #CBD5E1 |
+| Secondary text | content/muted | #475569 | #94A3B8 |
+| Headings and input values | content/strong | #0F172A | #F1F5F9 |
+| Borders | edge/subtle | #CBD5E1 | #1E293B |
+| Hint and progress track | surface/highlight | #E8EEF9 | #141B29 |
+| Success text | status/success/text | #065F46 | #34D399 |
+
+- Neutral surfaces. `background/default` and `surface/default` keep the popup neutral so the exported pages are read without a color cast. The popup uses `surface/default` so controls sit on a quiet field.
+- One saturated blue. `brand/primary/500` is the only saturated hue used for action. It appears on the export button, the progress fill and the focus ring. `brand/primary/600` is the hover state. Blue is not used for headings, borders or decoration. Green and red are reserved for status.
+- Muted metadata. `content/muted` carries field labels, the hint, the progress status and the footer. It is the second text level, never the reading level.
+- Reading text. `content/strong` carries the popup heading and input values. `content/default` carries the checkbox and body text.
+- Status. Success uses the `status/success/*` trio. Error uses `color/error/500` #FF1744 in both themes, mixed to 8% for the background and 40% for the border. The result text stays in the error color.
+
+At 320 px wide the popup uses text from 11 px to 16 px, with most labels at 12 px and 14 px. Text below 24 px regular or 18.66 px bold must reach 4.5:1 against its surface. Large text, control boundaries and the focus ring must reach 3:1. Status is carried by text as well as color.
+
+## 6. Font families
 
 | Token | Family | Role |
 | --- | --- | --- |
-| font/family/body | Inter | Primary reading and professional UI. |
-| font/family/heading | JetBrains Mono | Headings and technical titles. |
-| font/family/code | JetBrains Mono | Code and current technical content. |
-| font/family/legacy-code | Fira Code | Local `Code / Body` style; keep for compatibility until an explicit migration. |
-| font/family/editorial | Silkscreen | Decorative labels and kickers; limited use. |
-| font/family/theme/portfolio/display | Press Start 2P | Retro display exclusive to the portfolio. |
-| font/family/theme/portfolio/technical-mono | Share Tech Mono | Portfolio technical metadata. |
-| font/family/theme/portfolio/terminal | VT323 | Portfolio terminal/HUD. |
+| font/family/body | Inter | Primary reading and interface text. |
+| font/family/heading | JetBrains Mono | Headings and primary action labels. |
+| font/family/code | JetBrains Mono | Code and technical content. |
+| font/family/legacy-code | Fira Code | Legacy code face. Kept for compatibility; not bundled and not used in the popup. |
+| font/family/editorial | Silkscreen | Short decorative labels. Not bundled and not used in the popup. |
 
 ### Font implementation in the Chrome Extension
 
@@ -64,7 +112,9 @@ To remove external dependencies, simplify CSP and improve offline reliability, p
 --font-technical: "JetBrains Mono", ui-monospace, monospace;
 ```
 
-## 4. Typography foundations
+`assets/fonts/` contains Inter and JetBrains Mono variable woff2 files. The extension loads no font from the network.
+
+## 7. Typography foundations
 
 | Token | Value |
 | --- | --- |
@@ -73,32 +123,20 @@ To remove external dependencies, simplify CSP and improve offline reliability, p
 | font/family/editorial | Silkscreen |
 | font/family/heading | JetBrains Mono |
 | font/family/legacy-code | Fira Code |
-| font/family/theme/portfolio/display | Press Start 2P |
-| font/family/theme/portfolio/technical-mono | Share Tech Mono |
-| font/family/theme/portfolio/terminal | VT323 |
 | font/line-height/body | 26 px |
 | font/line-height/caption | 18 px |
 | font/line-height/display | 80 px |
-| font/line-height/lockup | 56 px |
-| font/line-height/lockup-technical | 40 px |
 | font/line-height/page-title | 56 px |
-| font/line-height/retro-display | 50 px |
-| font/line-height/retro-heading | 32 px |
 | font/line-height/secondary | 22 px |
 | font/line-height/section | 38 px |
 | font/line-height/subheading | 28 px |
-| font/line-height/terminal | 28 px |
 | font/size/body | 16 px |
 | font/size/caption | 12 px |
 | font/size/display | 72 px |
-| font/size/lockup | 48 px |
-| font/size/lockup-technical | 32 px |
 | font/size/page-title | 48 px |
-| font/size/retro-display | 36 px |
 | font/size/secondary | 14 px |
 | font/size/section | 30 px |
 | font/size/subheading | 20 px |
-| font/size/terminal | 20 px |
 | font/tracking/body | 0 px |
 | font/tracking/caption | 0.2 px |
 | font/tracking/display | -2 px |
@@ -107,67 +145,23 @@ To remove external dependencies, simplify CSP and improve offline reliability, p
 | font/tracking/technical | 1 px |
 | font/tracking/title | -1 px |
 
-## 5. Public and channel text styles
+## 8. Text styles
 
 | Style | Family | Weight | Size | Line height | Tracking | Case | Usage |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Brand / Lockup Name | JetBrains Mono | Regular | 48px | 56px | -1px | Original | Primary David Sandoval wordmark lockup. |
-| Brand / Lockup Technical | Share Tech Mono | Regular | 32px | 40px | 1px | Original | Technical lockup and developer handle. |
 | Code / Body | Fira Code | Regular | 14px | 22px | 0px | Original | Code snippets and technical annotations. |
-| Editorial / Label | Silkscreen | Bold | 14px | 22px | 0.5px | Uppercase | Badges and decorative technical labels. |
-| Theme / Portfolio Retro / Display | Press Start 2P | Regular | 36px | 50px | 0px | Uppercase | Major pixel-led display moments; portfolio scope only. |
-| Theme / Portfolio Retro / Heading | Press Start 2P | Regular | 20px | 32px | 0px | Uppercase | Compact pixel headings; avoid dense long-form use. |
-| Theme / Portfolio Retro / Technical Label | Share Tech Mono | Regular | 14px | 22px | 1px | Uppercase | Technical labels and developer-facing metadata. |
-| Theme / Portfolio Retro / Terminal Reading | VT323 | Regular | 20px | 28px | 0.5px | Original | Terminal/HUD reading; apply +1 semantic size compensation. |
+| Editorial / Label | Silkscreen | Bold | 14px | 22px | 0.5px | Uppercase | Short badges and decorative labels. Not used in the popup. |
 | Web / Body | Inter | Regular | 16px | 26px | 0px | Original | Primary reading text; never smaller than 16 px. |
 | Web / Caption | Inter | Medium | 12px | 18px | 0.2px | Original | Labels and captions; absolute 12 px floor. |
-| Web / Display | JetBrains Mono | Bold | 72px | 80px | -2px | Original | Hero h1 only; desktop display role. |
+| Web / Display | JetBrains Mono | Bold | 72px | 80px | -2px | Original | Landing page h1 only; desktop display role. |
 | Web / Page Title | JetBrains Mono | Bold | 48px | 56px | -1px | Original | Top heading of internal pages. |
 | Web / Secondary | Inter | Regular | 14px | 22px | 0px | Original | Metadata, navigation and dense functional text. |
 | Web / Section Heading | JetBrains Mono | Bold | 30px | 38px | -0.5px | Original | Primary h2 section heading. |
 | Web / Subheading | JetBrains Mono | Medium | 20px | 28px | 0px | Original | Card and panel titles. |
 
-## 6. Internal documentation text styles
+## 9. Primitive colors
 
-These styles belong to the Identity System documentation. They must not automatically become public styles of the extension.
-
-| Style | Family | Weight | Size | Line height | Tracking | Case | Usage |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Documentation / Arrow | JetBrains Mono | Bold | 14px | 22px | 0px | Original | Directional marker in documentation lists. |
-| Documentation / Card Title | JetBrains Mono | Medium | 16px | 24px | 0px | Original | Compact documentation card title. |
-| Documentation / Channel Sample / Link | JetBrains Mono | Medium | 14px | 22px | 0px | Original | Link Hub action specimen. |
-| Documentation / Channel Sample / Name | JetBrains Mono | Bold | 22px | 30px | 0px | Original | Link Hub name specimen. |
-| Documentation / Channel Sample / Professional Name | JetBrains Mono | Medium | 24px | 32px | 0px | Original | Professional Neutral name specimen. |
-| Documentation / Channel Sample / Professional Role | Inter | Medium | 15px | 22px | 0px | Original | Professional Neutral role specimen. |
-| Documentation / Channel Sample / Retro Display | Press Start 2P | Regular | 13px | 24px | 0px | Original | Documentation specimen only. |
-| Documentation / Channel Sample / Technical Meta | Share Tech Mono | Regular | 14px | 20px | 0px | Original | Technical metadata specimen. |
-| Documentation / Channel Sample / Terminal | VT323 | Regular | 25px | 30px | 0px | Original | Terminal specimen scale. |
-| Documentation / Compact Body | Inter | Regular | 13px | 20px | 0px | Original | Compact documentation copy; not a public body style. |
-| Documentation / Emphasis | Inter | Medium | 14px | 22px | 0px | Original | Emphasized documentation metadata. |
-| Documentation / Handoff | Share Tech Mono | Regular | 16px | 24px | 0px | Original | Implementation handoff references. |
-| Documentation / Identity Name | JetBrains Mono | Medium | 28px | 36px | 0px | Original | Name inside Identity / Person Lockup. |
-| Documentation / Identity Role | Inter | Medium | 16px | 24px | 0px | Original | Professional role inside Identity / Person Lockup. |
-| Documentation / Introduction | Inter | Regular | 18px | 30px | 0px | Original | Documentation introduction and lead copy. |
-| Documentation / Kicker Compact | Silkscreen | Bold | 12px | 18px | 0.8px | Uppercase | Internal compact kickers and status labels. |
-| Documentation / Mono Body | JetBrains Mono | Regular | 14px | 22px | 0px | Original | Modes, aliases and implementation references. |
-| Documentation / Note | Inter | Regular | 15px | 24px | 0px | Original | Long-form note or governance statement. |
-| Documentation / Page Title | JetBrains Mono | Bold | 48px | 58px | 0px | Original | Identity System documentation page title. |
-| Documentation / Principle Statement | JetBrains Mono | Medium | 24px | 34px | 0px | Original | Closing principle statement. |
-| Documentation / Rule | JetBrains Mono | Medium | 18px | 26px | 0px | Original | Short rules and channel-policy decisions. |
-| Documentation / Section Lead | JetBrains Mono | Medium | 28px | 38px | 0px | Original | Section lead below Web / Section Heading strength. |
-| Documentation / Section Title | JetBrains Mono | Medium | 26px | 36px | 0px | Original | Documentation section title. |
-| Documentation / Source Title | JetBrains Mono | Medium | 22px | 30px | 0px | Original | Source assets and documented examples. |
-| Documentation / Step Number | JetBrains Mono | Bold | 28px | 34px | 0px | Original | Architecture-diagram step number. |
-| Documentation / Table Emphasis | JetBrains Mono | Medium | 13px | 20px | 0px | Original | Emphasized matrix value. |
-| Documentation / Table Header | JetBrains Mono | Bold | 13px | 20px | 0px | Original | Compact matrix header. |
-| Documentation / Theme Title | JetBrains Mono | Bold | 28px | 36px | 0px | Original | Channel theme title. |
-| Documentation / Token Label | Inter | Medium | 12px | 16px | 0px | Original | Token swatch label. |
-| Documentation / Token Path | JetBrains Mono | Regular | 13px | 20px | 0px | Original | Token path and code reference. |
-| Documentation / Token Value | JetBrains Mono | Regular | 12px | 16px | 0px | Original | Compact token value. |
-
-## 7. Primitive colors
-
-Canonical color authoring is expressed in `oklch()`. Figma keeps an equivalent sRGB representation. In production, prefer OKLCH and keep Hex as a fallback or interoperability reference.
+Canonical color values are expressed in `oklch()`. The tables also keep an sRGB Hex reference. In production, prefer OKLCH and keep Hex as a fallback or interoperability reference.
 
 Alpha values use 8-digit Hex in `#RRGGBBAA` format.
 
@@ -228,11 +222,12 @@ Alpha values use 8-digit Hex in `#RRGGBBAA` format.
 | color/retro/phosphor | oklch(87.628% 0.22779 152.55) | #00FF88 |
 | color/success/500 | oklch(80.987% 0.21415 151.77) | #00E676 |
 | color/success/900 | oklch(42.539% 0.11588 144.31) | #1B5E20 |
-| color/terminal/success | oklch(87.628% 0.22779 152.55) | #00FF88 |
 | color/warning/500 | oklch(84.417% 0.17216 84.93) | #FFC107 |
 | color/warning/900 | oklch(70.757% 0.19745 46.46) | #FF6F00 |
 
-## 8. Semantic colors
+`color/retro/phosphor` is a reserved primitive. No semantic token in this repository resolves to it.
+
+## 10. Semantic colors
 
 Consume these tokens in components. Do not use primitives directly except when defining aliases.
 
@@ -254,65 +249,13 @@ Consume these tokens in components. Do not use primitives directly except when d
 | content/strong | #0F172A | #F1F5F9 |
 | edge/strong | #0F172A | #CBD5E1 |
 | edge/subtle | #CBD5E1 | #1E293B |
-| hero/glow | #0A5CD60F | #00B0FF24 |
-| logo/brackets | #1E40AF | #3B82F6 |
-| logo/inverted | #FFFFFF | #FFFFFF |
-| logo/monochrome | #020408 | #FFFFFF |
-| logo/ring | #0044CC | #00B0FF |
-| logo/slash-end | #00B0FF | #00D8FF |
-| logo/slash-start | #1E40AF | #3B82F6 |
 | status/success/background | #10B9810D | #10B9811A |
 | status/success/border | #10B98166 | #10B98199 |
 | status/success/text | #065F46 | #34D399 |
 | surface/default | #FFFFFF | #0A0D14 |
 | surface/highlight | #E8EEF9 | #141B29 |
-| terminal/glow | #00B0FF59 | #00B0FF59 |
-| terminal/primary | #00B0FF | #00B0FF |
-| terminal/success | #00FF88 | #00FF88 |
 
-## 9. Channel theme
-
-### Shared visual tokens
-
-Portfolio, Link Hub and Professional currently resolve the following visual tokens to the same value within each mode. The main difference between channels is typography.
-
-| Channel token | Light | Dark |
-| --- | --- | --- |
-| channel/accent/primary | #0A5CD6 | #00B0FF |
-| channel/accent/secondary | #3B82F6 | #00D8FF |
-| channel/background/canvas | #F5F8FC | #020408 |
-| channel/content/default | #334155 | #CBD5E1 |
-| channel/content/muted | #475569 | #94A3B8 |
-| channel/content/strong | #0F172A | #F1F5F9 |
-| channel/edge/default | #CBD5E1 | #1E293B |
-| channel/status/online | #1B5E20 | #00FF88 |
-| channel/surface/default | #FFFFFF | #0A0D14 |
-| channel/surface/highlight | #E8EEF9 | #141B29 |
-
-### Channel font matrix
-
-| Token | Portfolio | Link Hub | Professional |
-| --- | --- | --- | --- |
-| channel/font/body | JetBrains Mono | Inter | Inter |
-| channel/font/display | Press Start 2P | JetBrains Mono | JetBrains Mono |
-| channel/font/heading | VT323 | JetBrains Mono | JetBrains Mono |
-| channel/font/technical | Share Tech Mono | JetBrains Mono | JetBrains Mono |
-
-### Portfolio terminal tokens
-
-Although these tokens exist in all six Figma modes, their nominal scope is Portfolio.
-
-| Token | Resolved value |
-| --- | --- |
-| channel/portfolio/terminal/background | #020408 |
-| channel/portfolio/terminal/content | #F1F5F9 |
-| channel/portfolio/terminal/cyan | #00B0FF |
-| channel/portfolio/terminal/cyan-bright | #00D8FF |
-| channel/portfolio/terminal/grid | #1E293B |
-| channel/portfolio/terminal/phosphor | #00FF88 |
-| channel/portfolio/terminal/surface | #0A0D14 |
-
-## 10. Dimensions
+## 11. Dimensions
 
 All dimensions are pixels unless another unit is stated.
 
@@ -353,7 +296,9 @@ All dimensions are pixels unless another unit is stated.
 | stroke/hairline | 1px |
 | stroke/standard | 2px |
 
-## 11. Semantic spacing
+No current popup surface uses a shadow. The shadow offset tokens remain part of the scale.
+
+## 12. Semantic spacing
 
 | Token | Alias | Resolved |
 | --- | --- | --- |
@@ -368,7 +313,7 @@ All dimensions are pixels unless another unit is stated.
 | inset/control-y | space/3 | 12 px |
 | inset/panel | space/8 | 32 px |
 
-## 12. Semantic radius
+## 13. Semantic radius
 
 | Token | Alias | Resolved |
 | --- | --- | --- |
@@ -378,143 +323,36 @@ All dimensions are pixels unless another unit is stated.
 | radius/large | radius/xl | 24 px |
 | radius/panel | radius/lg | 16 px |
 
-## 13. Opacity
+## 14. Extension icon
 
-| Token | Value |
-| --- | --- |
-| opacity/watermark-light | 8% |
-| opacity/watermark-dark | 10% |
+The icon source is `icons/icon.svg`. It is a 128 by 128 canvas with `viewBox="0 0 128 128"`. Chrome receives the raster exports listed below, not the SVG.
 
-## 14. Effect styles
+| Element | Geometry | Fill or stroke |
+| --- | --- | --- |
+| Background | Rounded square, 128 by 128, corner radius 28. The corners outside the radius are transparent. | fill #0a5cd6 |
+| Page | Closed path through (40,30), (74,30), (92,48), (92,98) and (40,98). Bounding box 52 by 68. | fill #ffffff |
+| Fold | Triangle through (74,30), (74,48) and (92,48). The corner square is 18 by 18. | fill #bae0fd |
+| Arrow | Shaft from (66,60) to (66,84). Head to (54,72) and (78,72). Stroke width 7, round caps and joins. The arrow uses the background color and reads as a cutout in the page. | stroke #0a5cd6 |
 
-There are no local Paint Styles or Grid Styles in the snapshot. Colors are managed through variables. There are nine Effect Styles:
+The icon uses only the Light primary 500 value, the white page and the primary 200 fold. It has no separate dark variant. At 16 px the 7 px stroke scales to 0.875 px before rasterization, so the smallest icon relies on antialiasing.
 
-| Style | Type | Offset X | Offset Y | Blur | Color token | Usage |
-| --- | --- | --- | --- | --- | --- | --- |
-| Glow / Hero | Drop shadow | 0px | 0px | 30px | hero/glow | Mode-aware radial brand glow. |
-| Glow / Terminal | Drop shadow | 0px | 0px | 30px | terminal/glow | Terminal phosphor glow. |
-| Retro / XS | Drop shadow | 1px | 1px | 0px | edge/strong | Solid retro offset shadow. |
-| Retro / SM | Drop shadow | 1.5px | 1.5px | 0px | edge/strong | Solid retro offset shadow. |
-| Retro / MD | Drop shadow | 3px | 3px | 0px | edge/strong | Solid retro offset shadow. |
-| Retro / LG | Drop shadow | 4px | 4px | 0px | edge/strong | Solid retro offset shadow. |
-| Retro / XL | Drop shadow | 5px | 5px | 0px | edge/strong | Solid retro offset shadow. |
-| Retro / 2XL | Drop shadow | 6px | 6px | 0px | edge/strong | Solid retro offset shadow. |
-| Retro / 3XL | Drop shadow | 8px | 8px | 0px | edge/strong | Solid retro offset shadow. |
+| Icon color | Hex in SVG | Token |
+| --- | --- | --- |
+| Background and arrow | #0a5cd6 | color/primary/500-light |
+| Page | #ffffff | color/base/white |
+| Fold | #bae0fd | color/primary/200 |
 
-## 15. Logo geometry
+### Export mapping
 
-The master geometry is defined on a `512 × 512` grid.
+| Size | File | Manifest key |
+| --- | --- | --- |
+| 16 px | icons/icon-16.png | icons.16 and action.default_icon.16 |
+| 48 px | icons/icon-48.png | icons.48 and action.default_icon.48 |
+| 128 px | icons/icon-128.png | icons.128 and action.default_icon.128 |
 
-| Token | Value |
-| --- | --- |
-| avatar/padding | 48px |
-| clear-space | 32px |
-| glyph/cap-radius | 21px |
-| glyph/stroke | 42px |
-| grid/base | 512px |
-| mark/diameter | 448px |
-| minimum/digital | 24px |
-| minimum/print-mm | 8 mm |
-| ring/radius | 212px |
-| ring/stroke | 28px |
+`scripts/generate-icons.sh` rasterizes the SVG with ImageMagick to the three files. Do not edit the PNGs by hand. Regenerate them after any SVG change. The manifest declares no 32 px or 64 px icon.
 
-### Logo construction rules
-
-- The canonical isotype represents the **Confianza técnica** (technical trust) concept.
-- The slash is a single continuous silhouette with a cyan segment integrated through clipping.
-- Do not recreate the accent as a separate short slash.
-- Keep the 512 px master geometry and the clear space.
-- Minimum digital size: `24 px`.
-- Minimum print size: `8 mm`.
-
-## 16. Logo components
-
-### `Logo / Isotype`
-
-Component set: `16:52`
-
-Properties:
-
-- `Treatment`: `Primary`, `Monochrome`, `Inverted`.
-- `Mode`: `Light`, `Dark`.
-
-Variants:
-
-- `Treatment=Primary, Mode=Light` — `15:2`.
-- `Treatment=Primary, Mode=Dark` — `16:2`.
-- `Treatment=Monochrome, Mode=Light` — `16:12`.
-- `Treatment=Monochrome, Mode=Dark` — `16:22`.
-- `Treatment=Inverted, Mode=Light` — `16:32`.
-- `Treatment=Inverted, Mode=Dark` — `16:42`.
-
-### `Identity / Profile Mark`
-
-Component set: `19:46`
-
-Properties:
-
-- `Shape`: `Circle`, `Square`.
-- `Mode`: `Light`, `Dark`.
-
-Rules:
-
-- It is a mark for repositories, applications and project identities.
-- It is not approved as David's primary personal avatar.
-- For personal profiles, use `Identity / Portrait`.
-
-Variants:
-
-- Circle / Light — `19:2`.
-- Circle / Dark — `19:13`.
-- Square / Light — `19:24`.
-- Square / Dark — `19:35`.
-
-### `Logo / Favicon`
-
-Component set: `20:104`
-
-Properties:
-
-- `Size`: `16`, `32`, `64`.
-- `Mode`: `Light`, `Dark`.
-
-Rules:
-
-- They are real pixel masters.
-- Export at `1×`.
-- Do not resize an exported raster to produce another size.
-- For the Chrome Extension, export each size from its corresponding variant.
-
-Variants:
-
-- 16 Light — `20:38`.
-- 16 Dark — `20:49`.
-- 32 Light — `20:60`.
-- 32 Dark — `20:71`.
-- 64 Light — `20:82`.
-- 64 Dark — `20:93`.
-
-### `Logo / Watermark`
-
-Component set: `21:117`
-
-Properties:
-
-- `Mode`: `Light`, `Dark`.
-
-Rules:
-
-- Light: opacity `8%`.
-- Dark: opacity `10%`.
-- Do not override opacity on the instance.
-- Do not manually reduce below the approved values.
-
-Variants:
-
-- Light — `21:95`.
-- Dark — `21:106`.
-
-## 17. Export sizes
+## 15. Export sizes and Chrome icon mapping
 
 | Token | Size |
 | --- | --- |
@@ -524,21 +362,12 @@ Variants:
 | app-icon/128 | 128 px |
 | app-icon/256 | 256 px |
 | app-icon/512 | 512 px |
-| avatar/1200 | 1200 px |
-| avatar/400 | 400 px |
-| avatar/800 | 800 px |
-| business-card/height-mm | 55 mm |
-| business-card/width-mm | 85 mm |
 | favicon/16 | 16 px |
 | favicon/32 | 32 px |
 | favicon/48 | 48 px |
 | favicon/64 | 64 px |
-| github-social/height | 640 px |
-| github-social/width | 1280 px |
-| linkedin-cover/height | 396 px |
-| linkedin-cover/width | 1584 px |
-| open-graph/height | 630 px |
-| open-graph/width | 1200 px |
+
+Only the sizes in the Chrome Extension icon mapping are declared in `manifest.json`. The other rows are export references for product assets.
 
 ### Chrome Extension icon mapping
 
@@ -562,11 +391,11 @@ For Manifest V3, the official Chrome documentation recommends declaring square r
 }
 ```
 
-Figma contains explicit masters for `16`, `32` and `64`. The `48` and `128` sizes exist as export tokens but do not appear as variants inside `Logo / Favicon`; they must be exported from the source vector or added as variants before treating them as approved pixel masters.
+The repository ships `16`, `48` and `128` only. `manifest.json` declares those three sizes in both `icons` and `action.default_icon`. It does not declare `32` or `64`. `scripts/generate-icons.sh` rasterizes `icons/icon.svg` to `icons/icon-16.png`, `icons/icon-48.png` and `icons/icon-128.png`. The `32` and `64` entries in the example above are the general Chrome recommendation, not files in this repository.
 
-## 18. CSS starter for the extension
+## 16. CSS starter for the extension
 
-### Identity primitives and semantic aliases
+### Primitives and semantic aliases
 
 ```css
 :root {
@@ -652,6 +481,8 @@ button[data-variant="primary"] {
 }
 ```
 
+`src/styles/tokens.css` is the implementation. The starter above shows the primitive and semantic shape; the stylesheet adds the success and error aliases used by the popup.
+
 ### Explicit application theme override
 
 When the extension allows selecting a theme independently of the operating system:
@@ -667,19 +498,36 @@ When the extension allows selecting a theme independently of the operating syste
 }
 ```
 
-## 19. Accessibility and implementation constraints
+## 17. Accessibility and implementation constraints
 
+- The popup body is 320 px wide. Text and controls must remain legible at that width without horizontal scrolling.
 - Validate contrast ratios in Light and Dark before publishing.
+- Text below 24 px regular or 18.66 px bold must reach 4.5:1 against its surface. Large text and UI boundaries must reach 3:1.
 - `Web / Body` has a floor of `16 px`.
 - `Web / Caption` has an absolute floor of `12 px`.
-- Do not use `Silkscreen`, `Press Start 2P` or `VT323` for long-form reading.
-- Do not replace David's name or portrait with the isotype in personal contexts.
+- Do not use `Silkscreen` for long-form reading.
+- Status is carried by text as well as color. Do not rely on color alone.
+- Focus is a 2 px outline with a 1 px offset.
 - Use semantic tokens inside components; primitives only in definitions.
 - Avoid hardcoded colors outside the central token file.
-- Respect `prefers-reduced-motion` when implementing glow, transitions or any future motion rule.
-- The Retro effect styles belong to the portfolio language, not the whole brand.
+- Respect `prefers-reduced-motion` when implementing progress, transitions or any future motion rule.
+- The popup follows `prefers-color-scheme`. The `data-theme` override exists in the token file but no control exposes it.
+- The progress track uses `role="progressbar"` with `aria-valuemin`, `aria-valuemax` and `aria-valuenow`. The status line uses `aria-live="polite"`.
 
-## 20. Suggested extension token architecture
+## 18. Token architecture
+
+`src/styles/tokens.css` is the only token file in the current build. It contains the primitives, the semantic aliases, the light default and the dark override. The popup loads it before `popup.css`.
+
+Dependency direction:
+
+1. Primitives.
+2. Semantic aliases.
+3. Component aliases.
+4. UI components.
+
+Each layer consumes only the layer above it. Components use semantic or component aliases, never primitives.
+
+If the token file is split, keep this layout:
 
 ```text
 src/
@@ -696,45 +544,34 @@ src/
 └── manifest.json
 ```
 
-Recommended dependency direction:
+## 19. Implementation status
 
-```text
-primitives
-→ semantic aliases
-→ channel theme
-→ component tokens
-→ UI components
-```
+Confirmed in this repository:
 
-## 21. Confirmed and unconfirmed scope
+- Manifest V3, minimum Chrome 111.
+- Popup body width fixed at 320 px.
+- Light and dark values selected by `prefers-color-scheme`.
+- `src/styles/tokens.css` implements the primitives and semantic aliases used by the popup.
+- Inter and JetBrains Mono are bundled in `assets/fonts/`; no font loads from the network.
+- `icons/icon.svg` is the icon source; `icons/icon-16.png`, `icons/icon-48.png` and `icons/icon-128.png` are generated from it.
+- `manifest.json` declares the three icon sizes for `icons` and `action.default_icon`.
 
-### Confirmed
+Not present:
 
-- 10 local variable collections.
-- 230 local variables.
-- Light and Dark semantic color modes.
-- Six channel modes.
-- Complete typography foundations.
-- Logo, profile mark, favicon and watermark component APIs.
-- Nine effect styles.
-- No local Paint Styles.
-- No local Grid Styles.
+- A dark icon variant.
+- A visible theme selector. The `data-theme` override exists but is unused.
+- 32 px and 64 px icon files.
+- A text-based or accessible PDF. Exported pages are raster images, so the PDF cannot be searched, selected or read by screen readers.
 
-### Unconfirmed or requiring asset export
+## 20. Source responsibility
 
-- The Markdown does not embed the portrait or logo binaries.
-- Export the approved logo and favicon assets directly from their Figma nodes.
-- Figma exposes favicon variants for 16, 32 and 64 px; 48 and 128 require source-vector export or new approved pixel-master variants.
-- The document assumes Manifest V3, which is the current version accepted by the Chrome Web Store. Validate each surface (`icons`, `action`, side panel, options, etc.) against the official documentation.
+- `docs/design-system.md`: specification, measured values and product rules.
+- `src/styles/tokens.css`: CSS implementation of the tokens.
+- `src/popup/popup.html`, `src/popup/popup.css` and `src/popup/popup.js`: popup markup, styles and state behavior.
+- `icons/icon.svg`: icon source. `scripts/generate-icons.sh`: PNG generation. `manifest.json`: declared icon sizes.
+- `docs/selectors.md`: separate evidence about viewer selectors. It is not part of this document and does not define visual rules.
 
-## 22. Source responsibility
-
-- Figma: designed Identity System, variables, styles, logo and export references.
-- Production repository: implemented token names, CSS, theme behavior, assets and tests.
-- Cortex-L7: durable brand decisions, rationale, governance and cross-channel alignment.
-
-
-## 23. Official Chrome Extension references
+## 21. Official Chrome Extension references
 
 - [Manifest — Icons](https://developer.chrome.com/docs/extensions/reference/manifest/icons)
 - [Configure extension icons](https://developer.chrome.com/docs/extensions/develop/ui/configure-icons)

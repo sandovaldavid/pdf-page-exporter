@@ -34,12 +34,12 @@
   }
 
   function createOverlay() {
-    // Colors/radius mirror src/styles/tokens.css (David Sandoval Identity
-    // System — docs/design-system.md). Font stacks use the same fallback
-    // chains as --ds-font-body/--ds-font-heading, but not the bundled
-    // webfont files themselves: this <style> renders inside the host page
-    // (Drive), and loading a chrome-extension:// font from there would
-    // need a web_accessible_resources entry just for a few seconds of UI.
+    // Colors/radius mirror src/styles/tokens.css, which implements
+    // docs/design-system.md. Font stacks use the same fallback chains as
+    // --ds-font-body/--ds-font-heading, but not the bundled webfont files
+    // themselves: this <style> renders inside the host page (Drive), and
+    // loading a chrome-extension:// font from there would need a
+    // web_accessible_resources entry just for a few seconds of UI.
     const style = document.createElement("style");
     style.textContent = `
       .dpu-overlay { position: fixed; inset: 0; z-index: 2147483647; background: rgba(2,4,8,.55);

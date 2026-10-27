@@ -85,7 +85,7 @@ src/background/
 src/vendor/
   jspdf.umd.min.js         jsPDF 4.2.1, bundled (never loaded from a CDN)
 src/styles/
-  tokens.css               Design tokens from David Sandoval's Identity System (docs/design-system.md)
+  tokens.css               Extension design tokens, defined in docs/design-system.md
 assets/fonts/
   inter-variable-latin.woff2          Variable font, bundled (never loaded from a CDN)
   jetbrains-mono-variable-latin.woff2 Variable font, bundled (never loaded from a CDN)
@@ -163,18 +163,13 @@ verification of the PDFs. What is missing before calling it fully tested:
 
 ## Design
 
-The popup and progress overlay styles follow David Sandoval's personal
-Identity System. See `docs/design-system.md` for the source of truth (colors,
-typography, spacing). `src/styles/tokens.css` is the CSS implementation; no
-component should use hardcoded colors outside that file.
+The popup and the progress overlay follow the extension's own design system.
+`docs/design-system.md` is the specification (colors, typography, spacing) and
+`src/styles/tokens.css` is the implementation. No component may hardcode colors
+outside those two files.
 
-The current icon is a generic glyph (document + download arrow) recolored to
-the brand blue (`#0A5CD6`), **not** the official isotype/slash from the
-Identity System: that logo is not embedded in `design-system.md` (only tokens
-and references to Figma nodes), and recreating it by hand without the source
-file risks an unapproved version of the personal brand. To use the real
-isotype, export the approved assets from Figma (`Logo / Favicon`, section 16
-of the design system) and replace `icons/icon.svg`.
+The icon is the extension's own glyph: a document with a download arrow, drawn
+in the extension's primary blue (`#0A5CD6`). Its source is `icons/icon.svg`.
 
 ## Third-party licenses
 

@@ -15,8 +15,9 @@ async function updateBadge(state) {
     await chrome.action.setBadgeText({ text: "" });
     return;
   }
-  // Colors match the Identity System primitives (docs/design-system.md
-  // section 7): primary-500 light, status/success/text light, error/500.
+  // Colors match the design tokens in src/styles/tokens.css, defined in
+  // docs/design-system.md (section 9 for primary-500 and error/500;
+  // section 10 for status/success/text).
   if (state.status === "running") {
     await chrome.action.setBadgeText({ text: String(state.capturedPages ?? 0) });
     await chrome.action.setBadgeBackgroundColor({ color: "#0a5cd6" });
