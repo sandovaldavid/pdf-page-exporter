@@ -86,7 +86,10 @@ All screenshots must use **our own test document with no personal data**, never 
 2. ⬜ The progress overlay halfway through an export, showing "página 14 de 30" (page 14 of 30).
 3. ⬜ The resulting PDF already open, with the thumbnail panel visible to show that it keeps all pages and their orientations.
 
-`store-assets/` is in `.gitignore`; the screenshot is a submission asset, not part of the code.
+`store-assets/` holds screenshots and promo tiles. They are committed so they
+can be shown in the README, but they are never part of the extension package:
+`scripts/package-extension.sh` uses an allowlist and only ships `manifest.json`,
+`icons/`, `assets/` and `src/`.
 
 ## Permissions Justification
 

@@ -10,6 +10,8 @@ orientation.
 See `PLAN.md` for the full design, the audit of the original prototype and the
 technical decisions. See `CHROMEWEBSTORE.md` for the store listing.
 
+![The extension popup with the file name, quality selector and export button](store-assets/store-1.png)
+
 ## Current status
 
 v0.1.0 implementation verified end to end against 4 real PDF documents (3, 7,
