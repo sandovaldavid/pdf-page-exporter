@@ -99,8 +99,7 @@ DrivePDF-Unblocker/
 │   │   └── popup.js             ← all async/await, no .then() chains
 │   ├── content/
 │   │   ├── page-detector.js     ← ONLY place with Drive selectors
-│   │   ├── capture.js           ← orchestrator: scroll, capture, PDF, download
-│   │   └── overlay.css          ← classes prefixed dpu- to avoid collisions
+│   │   └── capture.js           ← orchestrator: scroll, capture, PDF, download; overlay classes prefixed dpu-
 │   ├── styles/
 │   │   └── tokens.css           ← extension design tokens (docs/design-system.md)
 │   ├── background/
