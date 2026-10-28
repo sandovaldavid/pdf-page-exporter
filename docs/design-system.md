@@ -55,6 +55,7 @@ This document is the specification for the design system. `src/styles/tokens.css
 In scope:
 
 - The popup at 320 px wide.
+- The progress overlay that the content script draws over the viewer.
 - The extension icon at 16, 48 and 128 px.
 - The token definitions, typography, dimensions and accessibility rules used by the popup and product pages.
 
@@ -510,6 +511,7 @@ When the extension allows selecting a theme independently of the operating syste
 - Focus is a 2 px outline with a 1 px offset.
 - Use semantic tokens inside components; primitives only in definitions.
 - Avoid hardcoded colors outside the central token file.
+- `src/content/capture.js` draws the progress overlay inside the viewer page, where the extension token variables are not defined. It repeats the literal token values and must change with them.
 - Respect `prefers-reduced-motion` when implementing progress, transitions or any future motion rule.
 - The popup follows `prefers-color-scheme`. The `data-theme` override exists in the token file but no control exposes it.
 - The progress track uses `role="progressbar"` with `aria-valuemin`, `aria-valuemax` and `aria-valuenow`. The status line uses `aria-live="polite"`.

@@ -112,7 +112,7 @@ DrivePDF-Unblocker/
 │   ├── icon-48.png  (48×48)
 │   └── icon-128.png (128×128)
 ├── scripts/
-│   ├── generate-icons.mjs
+│   ├── generate-icons.sh
 │   └── package-extension.sh
 ├── docs/
 │   ├── design-system.md         ← extension design system specification
@@ -183,7 +183,7 @@ The most fragile part of the whole project is the Drive selectors. They are not 
 ### Phase 1: Scaffolding
 
 - [ ] Create `manifest.json` per §3.
-- [ ] `scripts/generate-icons.mjs` that generates the three PNGs at their exact dimensions. Firm rule: if an icon is declared in the manifest, **the file must exist** and measure what is declared.
+- [ ] `scripts/generate-icons.sh` that generates the three PNGs at their exact dimensions. Firm rule: if an icon is declared in the manifest, **the file must exist** and measure what is declared.
 - [ ] Download `jspdf.umd.min.js` to `src/vendor/` and note the exact version in the README. Minified yes, obfuscated no (obfuscation is grounds for rejection).
 - [ ] `git init` and first commit (the directory is not yet a repo).
 
