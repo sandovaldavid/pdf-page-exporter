@@ -102,7 +102,7 @@ can be shown in the README, but they are never part of the extension package:
 | `https://drive.google.com/*` | host_permissions | The document viewer the extension operates on is served from this domain. Access is limited to reading the images of pages already shown on screen, only after a user click. |
 | `https://docs.google.com/*` | host_permissions | Some views of the same viewer load from this domain in a secondary frame. Without it, export fails on those documents. |
 
-Reviewer note: **no** `tabs`, `downloads`, `<all_urls>` or any network permission is requested. See `PLAN.md` §5 (D2, D7).
+Reviewer note: **no** `tabs`, `downloads`, `<all_urls>` or any network permission is requested. See `docs/original-plan.md` §5 (D2, D7).
 
 ## Privacy & Data Use
 
@@ -146,7 +146,7 @@ publishes only `website/`. The URL does not depend on `/docs`.
 
 ## Distribution
 
-**Visibility**: ⚠️ **Pending decision, see `PLAN.md` §7.** Recommendation: local unpacked install as the main path; if published, start as **Unlisted**.
+**Visibility**: ⚠️ **Pending decision, see `docs/original-plan.md` §7.** Recommendation: local unpacked install as the main path; if published, start as **Unlisted**.
 
 **Regions**: All regions
 

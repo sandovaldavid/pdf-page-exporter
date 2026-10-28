@@ -9,8 +9,8 @@ pixels the browser is already showing you, like a screenshot, walking through
 the document automatically and assembling each page at its real size and
 orientation.
 
-See `PLAN.md` for the full design, the audit of the original prototype and the
-technical decisions. See `CHROMEWEBSTORE.md` for the store listing.
+See `docs/original-plan.md` for the original plan, the audit of the prototype
+and the technical decisions. See `CHROMEWEBSTORE.md` for the store listing.
 
 ![The extension popup with the file name, quality selector and export button](store-assets/store-1.png)
 
@@ -110,6 +110,7 @@ website/                   Public bilingual site (English at /, Spanish at /es/)
 .github/scripts/check-website.py Link, fragment, language and no-script checks used by that workflow
 docs/selectors.md          Verification status of the viewer selectors
 docs/design-system.md      Source of truth for the visual identity
+docs/original-plan.md      Original plan, prototype audit and technical decisions
 ```
 
 ## Development
