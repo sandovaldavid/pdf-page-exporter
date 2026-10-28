@@ -89,7 +89,6 @@ The supplied prototype establishes the right idea, but **it would not work as is
 ```
 DrivePDF-Unblocker/
 ├── manifest.json
-├── PLAN.md                      ← this file
 ├── CHROMEWEBSTORE.md            ← store listing (required in this repo)
 ├── README.md
 ├── src/
@@ -115,6 +114,7 @@ DrivePDF-Unblocker/
 │   └── package-extension.sh
 ├── docs/
 │   ├── design-system.md         ← extension design system specification
+│   ├── original-plan.md         ← this file: original plan, audit and decisions
 │   └── selectors.md             ← DOM reconnaissance findings
 └── store-assets/                ← 1280×800 screenshots, excluded from the ZIP
 ```
