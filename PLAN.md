@@ -2,7 +2,7 @@
 
 > Project: `DrivePDF-Unblocker`
 > Date: 2026-07-27
-> Status: implemented (v0.1.0); this document preserves the original plan and audit. See `README.md` and `docs/selectors.md` for the current state.
+> Status: implemented (v0.1.0); this document preserves the original plan and audit. The checkboxes below are the original plan as written and are not a status report. See `README.md` and `docs/selectors.md` for the current state.
 > Sources consulted: `chrome-extensions` skill (GoogleChrome/modern-web-guidance) and the official jsPDF documentation via Context7 MCP (`/parallax/jspdf`).
 
 ---
@@ -99,8 +99,7 @@ DrivePDF-Unblocker/
 │   │   └── popup.js             ← all async/await, no .then() chains
 │   ├── content/
 │   │   ├── page-detector.js     ← ONLY place with Drive selectors
-│   │   ├── capture.js           ← orchestrator: scroll, capture, PDF, download
-│   │   └── overlay.css          ← classes prefixed dpu- to avoid collisions
+│   │   └── capture.js           ← orchestrator: scroll, capture, PDF, download; overlay classes prefixed dpu-
 │   ├── styles/
 │   │   └── tokens.css           ← extension design tokens (docs/design-system.md)
 │   ├── background/
@@ -112,7 +111,7 @@ DrivePDF-Unblocker/
 │   ├── icon-48.png  (48×48)
 │   └── icon-128.png (128×128)
 ├── scripts/
-│   ├── generate-icons.mjs
+│   ├── generate-icons.sh
 │   └── package-extension.sh
 ├── docs/
 │   ├── design-system.md         ← extension design system specification
@@ -183,7 +182,7 @@ The most fragile part of the whole project is the Drive selectors. They are not 
 ### Phase 1: Scaffolding
 
 - [ ] Create `manifest.json` per §3.
-- [ ] `scripts/generate-icons.mjs` that generates the three PNGs at their exact dimensions. Firm rule: if an icon is declared in the manifest, **the file must exist** and measure what is declared.
+- [ ] `scripts/generate-icons.sh` that generates the three PNGs at their exact dimensions. Firm rule: if an icon is declared in the manifest, **the file must exist** and measure what is declared.
 - [ ] Download `jspdf.umd.min.js` to `src/vendor/` and note the exact version in the README. Minified yes, obfuscated no (obfuscation is grounds for rejection).
 - [ ] `git init` and first commit (the directory is not yet a repo).
 
