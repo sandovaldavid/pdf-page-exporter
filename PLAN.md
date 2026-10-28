@@ -2,7 +2,7 @@
 
 > Project: `DrivePDF-Unblocker`
 > Date: 2026-07-27
-> Status: implemented (v0.1.0); this document preserves the original plan and audit. See `README.md` and `docs/selectors.md` for the current state.
+> Status: implemented (v0.1.0); this document preserves the original plan and audit. The checkboxes below are the original plan as written and are not a status report. See `README.md` and `docs/selectors.md` for the current state.
 > Sources consulted: `chrome-extensions` skill (GoogleChrome/modern-web-guidance) and the official jsPDF documentation via Context7 MCP (`/parallax/jspdf`).
 
 ---
